@@ -53,6 +53,13 @@ static void display_flush_cb(lv_display_t* disp, const lv_area_t* area, uint8_t*
 }
 
 /**
+ * @brief Tick callback for LVGL
+ */
+static uint32_t tick_get_cb(void) {
+    return SDL_GetTicks();
+}
+
+/**
  * @brief Initialize SDL2
  */
 static bool initialize_sdl() {
@@ -98,24 +105,17 @@ static bool initialize_sdl() {
     
     printf("SDL2 initialized successfully\n");
     return true;
-}lvgl_buf1) free(lvgl_buf1);
-    if (lvgl_buf2) free(lvgl_buf2);
-    if (screen_texture) SDL_DestroyTexture(screen_texture);
-    if (renderer) SDL_DestroyRenderer(renderer);
-    if (window) SDL_DestroyWindow(window);c uint32_t tick_get_cb(void) {
-    return SDL_GetTicks();
 }
 
 /**
  * @brief Clean up SDL2 resources
  */
 static void cleanup() {
-    if (renderer) {
-        SDL_DestroyRenderer(renderer);
-    }
-    if (window) {
-        SDL_DestroyWindow(window);
-    }
+    if (lvgl_buf1) free(lvgl_buf1);
+    if (lvgl_buf2) free(lvgl_buf2);
+    if (screen_texture) SDL_DestroyTexture(screen_texture);
+    if (renderer) SDL_DestroyRenderer(renderer);
+    if (window) SDL_DestroyWindow(window);
     SDL_Quit();
     printf("Cleaned up SDL2 resources\n");
 }
@@ -141,8 +141,7 @@ int main(int argc, char* argv[]) {
     // Set tick callback
     lv_tick_set_cb(tick_get_cb);
     
-    // Allocate display buffer and initialize to black
-    disCreate display
+    // Create display
     lv_display_t* disp = lv_display_create(WINDOW_WIDTH, WINDOW_HEIGHT);
     
     // Allocate two buffers (1/10 screen size each for partial rendering)
@@ -181,7 +180,12 @@ int main(int argc, char* argv[]) {
     uint32_t frame_count = 0;
     
     printf("Entering main loop...\n");
-    fflush(stdourunning = false;
+    fflush(stdout);
+    
+    while (running) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                running = false;
             } else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
                 running = false;
             }
@@ -214,13 +218,7 @@ int main(int argc, char* argv[]) {
     }
     
     printf("Exiting...\n");
-    fflush(stdout)y
-        SDL_Delay(1);
-    }
-    
-    printf("Exiting...\n");
     fflush(stdout);
-    delete[] disp_buf;
     cleanup();
     
     return 0;

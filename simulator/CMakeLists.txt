@@ -19,6 +19,11 @@ set(LV_CONF_PATH
 
 # Disable ARM-specific optimizations for x86_64 simulator
 set(LV_USE_DRAW_SW_ASM OFF CACHE BOOL "" FORCE)
+set(LV_USE_DRAW_SW_ASM_HELIUM OFF CACHE BOOL "" FORCE)
+set(LV_USE_DRAW_SW_ASM_NEON OFF CACHE BOOL "" FORCE)
+
+# Skip ASM assembly source files (they're ARM-specific)
+set(CMAKE_ASM_COMPILE_OBJECT "<CMAKE_C_COMPILER> <DEFINES> <INCLUDES> <FLAGS> -E -x c -o <OBJECT> <SOURCE>" CACHE STRING "" FORCE)
 
 # Add LVGL library
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/lvgl)
