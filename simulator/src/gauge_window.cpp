@@ -4,6 +4,9 @@
  */
 
 #include "gauge_window.h"
+#include "rpm_gauge.h"
+#include "speed_display.h"
+#include "temp_gauge.h"
 #include <cstdio>
 #include <map>
 #include <memory>
@@ -40,10 +43,13 @@ void GaugeWindow::displayFlushCallback(lv_display_t* disp, const lv_area_t* area
     lv_display_flush_ready(disp);
 }
 
+
 GaugeWindow::GaugeWindow(GaugeType gauge_type, int x, int y, int width, int height, int window_id)
     : window_(nullptr), renderer_(nullptr), texture_(nullptr), display_(nullptr),
-      buf1_(nullptr), buf2_(nullptr), rpm_gauge_(nullptr), screen_(nullptr),
-      width_(width), height_(height), window_id_(window_id), gauge_type_(gauge_type) {
+      buf1_(nullptr), buf2_(nullptr), rpm_gauge_(nullptr), speed_display_(nullptr),
+      temp_gauge_(nullptr), screen_(nullptr),
+      width_(width), height_(height), window_id_(window_id), last_x_(0), last_y_(false),
+      gauge_type_(gauge_type) {
     
     // Create SDL window
     window_ = SDL_CreateWindow(
@@ -109,7 +115,7 @@ GaugeWindow::GaugeWindow(GaugeType gauge_type, int x, int y, int width, int heig
     g_window_map[display_] = this;
     lv_display_set_flush_cb(display_, displayFlushCallback);
     
-    // Create screen
+    // Create main screen to hold the gauge
     screen_ = lv_obj_create(nullptr);
     lv_obj_set_size(screen_, LV_PCT(100), LV_PCT(100));
     lv_obj_set_style_bg_color(screen_, lv_color_hex(0x1a1a1a), 0);
@@ -121,13 +127,15 @@ GaugeWindow::GaugeWindow(GaugeType gauge_type, int x, int y, int width, int heig
     switch (gauge_type_) {
         case GAUGE_RPM:
             rpm_gauge_ = new RPMGauge(screen_);
-            lv_obj_set_flex_grow(rpm_gauge_->getContainer(), 1);
             break;
-        default:
+        case GAUGE_SPEED:
+            speed_display_ = new SpeedDisplay(screen_);
+            break;
+        case GAUGE_TEMP:
+            temp_gauge_ = new TempGauge(screen_);
             break;
     }
     
-    // Load screen on the display
     lv_screen_load(screen_);
     
     printf("Created gauge window %d at (%d, %d) with size %dx%d\n", 
@@ -135,24 +143,30 @@ GaugeWindow::GaugeWindow(GaugeType gauge_type, int x, int y, int width, int heig
 }
 
 GaugeWindow::~GaugeWindow() {
-    if (display_) {
-        g_window_map.erase(display_);
-        // Don't delete the display yet, just remove from map
-    }
-    
+    // Clean up gauge objects
     if (rpm_gauge_) {
         delete rpm_gauge_;
         rpm_gauge_ = nullptr;
     }
+    if (speed_display_) {
+        delete speed_display_;
+        speed_display_ = nullptr;
+    }
+    if (temp_gauge_) {
+        delete temp_gauge_;
+        temp_gauge_ = nullptr;
+    }
+    
+    if (display_) {
+        g_window_map.erase(display_);
+    }
     
     if (screen_) {
-        // Unload screen before deleting
         lv_obj_del(screen_);
         screen_ = nullptr;
     }
     
     if (display_) {
-        // Now safe to clean up display
         lv_display_delete(display_);
         display_ = nullptr;
     }
@@ -182,9 +196,24 @@ GaugeWindow::~GaugeWindow() {
     printf("Destroyed gauge window %d\n", window_id_);
 }
 
+
 void GaugeWindow::update(const MockData& data) {
-    if (rpm_gauge_) {
-        rpm_gauge_->update(data.getRPM());
+    switch (gauge_type_) {
+        case GAUGE_RPM:
+            if (rpm_gauge_) {
+                rpm_gauge_->update(data.getRPM());
+            }
+            break;
+        case GAUGE_SPEED:
+            if (speed_display_) {
+                speed_display_->update(data.getSpeed());
+            }
+            break;
+        case GAUGE_TEMP:
+            if (temp_gauge_) {
+                temp_gauge_->update(data.getCoolantTemp());
+            }
+            break;
     }
 }
 
@@ -202,4 +231,64 @@ uint32_t GaugeWindow::getWindowID() const {
         return SDL_GetWindowID(window_);
     }
     return 0;
+}
+
+bool GaugeWindow::handleEvent(const SDL_Event& event) {
+    // Check if event is for this window
+    uint32_t our_window_id = getWindowID();
+    if (our_window_id == 0) {
+        return false;
+    }
+    
+    // Filter events for this specific window
+    bool is_our_window = false;
+    int event_x = 0, event_y = 0;
+    
+    if (event.type == SDL_MOUSEMOTION && event.motion.windowID == our_window_id) {
+        is_our_window = true;
+        event_x = event.motion.x;
+        event_y = event.motion.y;
+    } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.windowID == our_window_id) {
+        is_our_window = true;
+        event_x = event.button.x;
+        event_y = event.button.y;
+    } else if (event.type == SDL_MOUSEBUTTONUP && event.button.windowID == our_window_id) {
+        is_our_window = true;
+        event_x = event.button.x;
+        event_y = event.button.y;
+    }
+    
+    if (!is_our_window) {
+        return false;
+    }
+    
+    // Make sure this display is active for input processing
+    lv_display_set_default(display_);
+    
+    // Track mouse state
+    last_x_ = event_x;
+    last_y_ = event_y;
+    
+    if (event.type == SDL_MOUSEBUTTONDOWN) {
+        is_pressed_ = true;
+        // Find object at this position and send click event
+        lv_point_t point = {event_x, event_y};
+        lv_obj_t* obj = lv_indev_search_obj(screen_, &point);
+        if (obj) {
+            // Send both pressed and released events
+            lv_obj_send_event(obj, LV_EVENT_PRESSED, nullptr);
+        }
+    } else if (event.type == SDL_MOUSEBUTTONUP) {
+        is_pressed_ = false;
+        // Find object at this position
+        lv_point_t point = {event_x, event_y};
+        lv_obj_t* obj = lv_indev_search_obj(screen_, &point);
+        if (obj) {
+            // Send released and clicked events
+            lv_obj_send_event(obj, LV_EVENT_RELEASED, nullptr);
+            lv_obj_send_event(obj, LV_EVENT_CLICKED, nullptr);
+        }
+    }
+    
+    return true;
 }

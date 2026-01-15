@@ -8,6 +8,8 @@
 
 #include "lvgl.h"
 #include "rpm_gauge.h"
+#include "speed_display.h"
+#include "temp_gauge.h"
 #include "mock_data.h"
 #include <SDL2/SDL.h>
 
@@ -62,6 +64,18 @@ public:
      */
     int getHeight() const { return height_; }
     
+    /**
+     * @brief Get current gauge type
+     */
+    GaugeType getCurrentGaugeType() const { return gauge_type_; }
+    
+    /**
+     * @brief Handle SDL events for this window (mouse clicks, key presses, etc.)
+     * @param event SDL event to process
+     * @return true if event was handled by this window
+     */
+    bool handleEvent(const SDL_Event& event);
+    
 private:
     SDL_Window* window_;
     SDL_Renderer* renderer_;
@@ -71,12 +85,19 @@ private:
     void* buf1_;
     void* buf2_;
     
+    // Gauge objects
     RPMGauge* rpm_gauge_;
+    SpeedDisplay* speed_display_;
+    TempGauge* temp_gauge_;
+    
     lv_obj_t* screen_;
     
     int width_;
     int height_;
     int window_id_;
+    int last_x_;
+    int last_y_;
+    bool is_pressed_;
     GaugeType gauge_type_;
     
     /**

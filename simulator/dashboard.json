@@ -1,0 +1,52 @@
+{
+  "windows": [
+    {
+      "id": 0,
+      "x": 100,
+      "y": 100,
+      "width": 320,
+      "height": 480,
+      "gauges": [
+        {
+          "type": "rpm",
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 480
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "x": 450,
+      "y": 100,
+      "width": 320,
+      "height": 480,
+      "gauges": [
+        {
+          "type": "speed",
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 480
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "x": 800,
+      "y": 100,
+      "width": 320,
+      "height": 480,
+      "gauges": [
+        {
+          "type": "temp",
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 480
+        }
+      ]
+    }
+  ]
+}

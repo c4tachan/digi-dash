@@ -7,7 +7,9 @@
 #define WINDOW_MANAGER_H
 
 #include "gauge_window.h"
+#include "config.h"
 #include "mock_data.h"
+#include <SDL2/SDL.h>
 #include <vector>
 #include <memory>
 
@@ -17,7 +19,14 @@ public:
     ~WindowManager();
     
     /**
-     * @brief Create and add a new gauge window
+     * @brief Initialize windows from configuration
+     * @param config Dashboard configuration
+     * @return True if all windows created successfully
+     */
+    bool initializeFromConfig(const DashboardConfig& config);
+    
+    /**
+     * @brief Create and add a new gauge window (legacy API)
      * @param gauge_type Type of gauge to display
      * @return True if window was created successfully
      */
@@ -34,6 +43,12 @@ public:
      * @param data Mock data source
      */
     void update(const MockData& data);
+    
+    /**
+     * @brief Handle SDL event for all windows
+     * @param event SDL event to process
+     */
+    void handleEvent(const SDL_Event& event);
     
     /**
      * @brief Render all windows

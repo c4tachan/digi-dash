@@ -14,6 +14,55 @@ WindowManager::~WindowManager() {
     windows_.clear();
 }
 
+bool WindowManager::initializeFromConfig(const DashboardConfig& config) {
+    if (config.windows.empty()) {
+        fprintf(stderr, "Configuration has no windows\n");
+        return false;
+    }
+    
+    if (config.windows.size() > MAX_WINDOWS) {
+        fprintf(stderr, "Configuration has %zu windows, maximum is %zu\n", config.windows.size(), MAX_WINDOWS);
+        return false;
+    }
+    
+    bool all_success = true;
+    
+    for (const auto& win_cfg : config.windows) {
+        // Determine gauge type from config
+        GaugeWindow::GaugeType gauge_type = GaugeWindow::GAUGE_RPM;
+        
+        if (!win_cfg.gauges.empty()) {
+            const auto& gauge = win_cfg.gauges[0];
+            if (gauge.type == "speed") {
+                gauge_type = GaugeWindow::GAUGE_SPEED;
+            } else if (gauge.type == "temp") {
+                gauge_type = GaugeWindow::GAUGE_TEMP;
+            }
+        }
+        
+        try {
+            auto window = std::make_unique<GaugeWindow>(gauge_type, win_cfg.x, win_cfg.y, 
+                                                        win_cfg.width, win_cfg.height, 
+                                                        next_window_id_);
+            
+            if (!window->isValid()) {
+                fprintf(stderr, "Failed to create valid gauge window from config\n");
+                all_success = false;
+                continue;
+            }
+            
+            windows_.push_back(std::move(window));
+            next_window_id_++;
+        } catch (const std::exception& e) {
+            fprintf(stderr, "Exception creating window from config: %s\n", e.what());
+            all_success = false;
+        }
+    }
+    
+    printf("Initialized %zu windows from configuration\n", windows_.size());
+    return all_success;
+}
+
 bool WindowManager::addGaugeWindow(GaugeWindow::GaugeType gauge_type) {
     if (windows_.size() >= MAX_WINDOWS) {
         fprintf(stderr, "Maximum number of windows (%zu) reached\n", MAX_WINDOWS);
@@ -60,6 +109,18 @@ void WindowManager::update(const MockData& data) {
     for (auto& window : windows_) {
         if (window && window->isValid()) {
             window->update(data);
+        }
+    }
+}
+
+void WindowManager::handleEvent(const SDL_Event& event) {
+    // Try to route the event to the appropriate window
+    for (auto& window : windows_) {
+        if (window && window->isValid()) {
+            if (window->handleEvent(event)) {
+                // Event was handled by this window
+                break;
+            }
         }
     }
 }

@@ -7,6 +7,7 @@
 #include "lv_examples.h"
 #include "lv_demos.h"
 #include "window_manager.h"
+#include "config.h"
 #include "mock_data.h"
 #include <SDL2/SDL.h>
 #include <cstdio>
@@ -168,9 +169,16 @@ int main(int argc, char* argv[]) {
     // Create window manager for managing multiple gauge windows
     WindowManager window_manager;
     
-    // Create the first gauge window
-    if (!window_manager.addGaugeWindow(GaugeWindow::GAUGE_RPM)) {
-        fprintf(stderr, "Failed to create first gauge window\n");
+    // Load configuration from JSON file
+    DashboardConfig config = DashboardConfig::loadFromFile("dashboard.json");
+    if (config.windows.empty()) {
+        fprintf(stderr, "Failed to load configuration from dashboard.json\n");
+        return 1;
+    }
+    
+    // Initialize windows from configuration
+    if (!window_manager.initializeFromConfig(config)) {
+        fprintf(stderr, "Failed to initialize windows from configuration\n");
         return 1;
     }
     
@@ -184,7 +192,6 @@ int main(int argc, char* argv[]) {
     uint32_t frame_count = 0;
     
     printf("Entering main loop...\n");
-    printf("Press SPACE in any window to create a new gauge window\n");
     printf("Close any window to remove it, close all to exit\n");
     fflush(stdout);
     
@@ -204,16 +211,17 @@ int main(int argc, char* argv[]) {
                 }
             } else if (event.type == SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
-                    case SDLK_SPACE:
-                        // Add a new gauge window
-                        window_manager.addGaugeWindow(GaugeWindow::GAUGE_RPM);
-                        break;
                     case SDLK_ESCAPE:
                         running = false;
                         break;
                     default:
                         break;
                 }
+            } else if (event.type == SDL_MOUSEMOTION ||
+                       event.type == SDL_MOUSEBUTTONDOWN ||
+                       event.type == SDL_MOUSEBUTTONUP) {
+                // Route mouse events to windows
+                window_manager.handleEvent(event);
             }
         }
         

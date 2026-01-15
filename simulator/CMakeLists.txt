@@ -12,6 +12,12 @@ set(CMAKE_ASM_COMPILE_OBJECT "<CMAKE_C_COMPILER> <DEFINES> <INCLUDES> <FLAGS> -x
 # Find SDL2
 find_package(SDL2 REQUIRED)
 
+# Fetch nlohmann/json for JSON configuration
+include(FetchContent)
+FetchContent_Declare(json 
+    URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
 # LVGL configuration
 set(LV_CONF_PATH 
     ${CMAKE_CURRENT_SOURCE_DIR}/lv_conf.h
@@ -38,6 +44,7 @@ include_directories(
 # Source files
 set(SOURCES
     src/main.cpp
+    src/config.cpp
     src/gauge_window.cpp
     src/window_manager.cpp
     src/rpm_gauge.cpp
@@ -49,12 +56,21 @@ set(SOURCES
 # Executable
 add_executable(${PROJECT_NAME} ${SOURCES})
 
+# Copy dashboard.json to build directory
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_CURRENT_SOURCE_DIR}/dashboard.json
+    ${CMAKE_CURRENT_BINARY_DIR}/dashboard.json
+    COMMENT "Copying dashboard.json to build directory"
+)
+
 # Link libraries
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
     lvgl
     lvgl::thorvg
     ${SDL2_LIBRARIES}
+    nlohmann_json::nlohmann_json
     pthread
     m
 )
