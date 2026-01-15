@@ -6,7 +6,7 @@
 #include "lvgl.h"
 #include "lv_examples.h"
 #include "lv_demos.h"
-#include "dashboard_screen.h"
+#include "window_manager.h"
 #include "mock_data.h"
 #include <SDL2/SDL.h>
 #include <cstdio>
@@ -165,10 +165,14 @@ int main(int argc, char* argv[]) {
     
     printf("LVGL initialized successfully\n");
     
-    // Create dashboard screen
-    DashboardScreen dashboard;
-    lv_obj_t* screen = dashboard.getScreen();
-    lv_screen_load(screen);
+    // Create window manager for managing multiple gauge windows
+    WindowManager window_manager;
+    
+    // Create the first gauge window
+    if (!window_manager.addGaugeWindow(GaugeWindow::GAUGE_RPM)) {
+        fprintf(stderr, "Failed to create first gauge window\n");
+        return 1;
+    }
     
     // Create mock data generator
     MockData mock_data;
@@ -180,39 +184,68 @@ int main(int argc, char* argv[]) {
     uint32_t frame_count = 0;
     
     printf("Entering main loop...\n");
+    printf("Press SPACE in any window to create a new gauge window\n");
+    printf("Close any window to remove it, close all to exit\n");
     fflush(stdout);
     
     while (running) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
-            } else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
-                running = false;
+            } else if (event.type == SDL_WINDOWEVENT) {
+                if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
+                    // Remove the closed window
+                    window_manager.removeWindow(event.window.windowID);
+                    
+                    // Exit if no windows remain
+                    if (!window_manager.hasWindows()) {
+                        running = false;
+                    }
+                }
+            } else if (event.type == SDL_KEYDOWN) {
+                switch (event.key.keysym.sym) {
+                    case SDLK_SPACE:
+                        // Add a new gauge window
+                        window_manager.addGaugeWindow(GaugeWindow::GAUGE_RPM);
+                        break;
+                    case SDLK_ESCAPE:
+                        running = false;
+                        break;
+                    default:
+                        break;
+                }
             }
+        }
+        
+        // Check if any windows remain
+        if (!window_manager.hasWindows()) {
+            running = false;
+            break;
         }
         
         // Update mock data periodically
         uint32_t current_time = SDL_GetTicks();
         if (current_time - last_update >= 50) {  // ~20 FPS updates
             mock_data.update();
-            dashboard.update(mock_data);
+            window_manager.update(mock_data);
             last_update = current_time;
             frame_count++;
             
             if (frame_count % 20 == 0) {
-                printf("Frame %u - RPM: %u, Speed: %u, Temp: %u°C\n", 
-                       frame_count, mock_data.getRPM(), mock_data.getSpeed(), mock_data.getCoolantTemp());
+                printf("Frame %u - RPM: %u, Speed: %u, Temp: %u°C | Windows: %zu\n", 
+                       frame_count, mock_data.getRPM(), mock_data.getSpeed(), 
+                       mock_data.getCoolantTemp(), window_manager.getWindowCount());
                 fflush(stdout);
             }
         }
         
-        // Let LVGL render to its buffers
-        lv_timer_handler();
+        // Handle LVGL rendering once per frame (only if we have windows)
+        if (window_manager.hasWindows()) {
+            lv_timer_handler();
+        }
         
-        // Render to screen
-        SDL_RenderClear(renderer);
-        SDL_RenderCopy(renderer, screen_texture, nullptr, nullptr);
-        SDL_RenderPresent(renderer);
+        // Render all windows
+        window_manager.renderAll();
         
         SDL_Delay(5);
     }
