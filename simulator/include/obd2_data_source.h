@@ -7,6 +7,10 @@
 #define OBD2_DATA_SOURCE_H
 
 #include "data_source.h"
+#include <map>
+#include <string>
+
+struct PidConfig;
 
 /**
  * @brief Real OBD II data source via ELM327 adapter
@@ -21,8 +25,9 @@ public:
     /**
      * @brief Create OBD II data source
      * @param port_name Serial port or Bluetooth device (e.g. "/dev/rfcomm0", "COM3")
+     * @param pid_config Map of parameter names ("rpm", "speed", etc) to PID configurations
      */
-    OBD2DataSource(const char* port_name);
+    OBD2DataSource(const char* port_name, const std::map<std::string, PidConfig>& pid_config);
     ~OBD2DataSource();
     
     /**
@@ -65,6 +70,11 @@ private:
     int coolant_temp_;
     bool connected_;
     
+    // PID configuration stored from initialization
+    std::string rpm_pid_;
+    std::string speed_pid_;
+    std::string coolant_temp_pid_;
+    
     /**
      * @brief Connect to serial port
      */
@@ -80,7 +90,8 @@ private:
      * @param pid Parameter ID (e.g. 0x0C for RPM)
      * @return Decoded value or -1 on error
      */
-    int queryOBD2(unsigned char pid);
+    int queryOBD2(const std::string& pid_command);
 };
 
 #endif // OBD2_DATA_SOURCE_H
+

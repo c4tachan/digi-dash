@@ -1,4 +1,26 @@
 {
+  "pids": {
+    "rpm": {
+      "command": "010C",
+      "formula": "((A*256)+B)/4",
+      "unit": "RPM"
+    },
+    "speed": {
+      "command": "010D",
+      "formula": "A",
+      "unit": "km/h"
+    },
+    "coolant_temp": {
+      "command": "0105",
+      "formula": "A-40",
+      "unit": "°C"
+    },
+    "temp": {
+      "command": "0105",
+      "formula": "A-40",
+      "unit": "°C"
+    }
+  },
   "windows": [
     {
       "id": 0,

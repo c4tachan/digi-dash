@@ -30,6 +30,23 @@ DashboardConfig DashboardConfig::loadFromString(const std::string& json_str) {
     try {
         json j = json::parse(json_str);
         
+        // Parse PID definitions
+        if (j.contains("pids") && j["pids"].is_object()) {
+            for (auto& [key, pid_json] : j["pids"].items()) {
+                PidConfig pid_cfg;
+                pid_cfg.command = pid_json.value("command", "");
+                pid_cfg.formula = pid_json.value("formula", "A");
+                pid_cfg.unit = pid_json.value("unit", "");
+                config.pids[key] = pid_cfg;
+            }
+            printf("Loaded PID definitions: %zu types\n", config.pids.size());
+            for (const auto& [key, pid] : config.pids) {
+                printf("  %s: cmd=%s formula=%s unit=%s\n", 
+                       key.c_str(), pid.command.c_str(), pid.formula.c_str(), pid.unit.c_str());
+            }
+        }
+        
+        // Parse window definitions
         if (j.contains("windows") && j["windows"].is_array()) {
             for (const auto& win_json : j["windows"]) {
                 WindowConfig win_cfg;

@@ -1,6 +1,6 @@
 /**
  * @file config.h
- * @brief Configuration loader for dashboard windows
+ * @brief Configuration loader for dashboard windows and OBD II PIDs
  */
 
 #ifndef CONFIG_H
@@ -8,9 +8,16 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
+
+struct PidConfig {
+    std::string command;      // OBD II command, e.g. "010C"
+    std::string formula;      // Decoding formula, e.g. "((A*256)+B)/4" for RPM
+    std::string unit;         // Display unit, e.g. "RPM"
+};
 
 struct GaugeConfig {
     std::string type;  // "rpm", "speed", "temp"
@@ -30,12 +37,13 @@ struct WindowConfig {
 };
 
 struct DashboardConfig {
+    std::map<std::string, PidConfig> pids;  // PID definitions keyed by type ("rpm", "speed", etc)
     std::vector<WindowConfig> windows;
     
     /**
      * @brief Load configuration from JSON file
      * @param filename Path to JSON configuration file
-     * @return true if loaded successfully
+     * @return Configuration object
      */
     static DashboardConfig loadFromFile(const std::string& filename);
     
