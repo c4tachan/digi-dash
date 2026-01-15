@@ -8,6 +8,7 @@ PC-based simulator for the Digi-Dash automotive dashboard UI using LVGL and SDL2
 - **Speed Display**: Digital speed display (km/h)
 - **Coolant Temperature Gauge**: Vertical bar gauge with color coding
 - **Mock Data Generator**: Simulates realistic sensor data changes
+- **OBD-II Support**: Connect to real vehicle data via Bluetooth ELM327 adapters
 
 ## Prerequisites
 
@@ -46,8 +47,32 @@ sudo pacman -S base-devel cmake git sdl2
 
 3. **Run the simulator**:
    ```bash
-   ./digi-dash-simulator
+   # With mock data (default)
+   ./digi-dash-simulator --mock
+   
+   # With real OBD-II data via Bluetooth
+   ./digi-dash-simulator --obd2 /dev/rfcomm0
+   
+   # View all options
+   ./digi-dash-simulator --help
    ```
+
+## OBD-II Bluetooth Setup
+
+To connect to a real vehicle via Bluetooth ELM327 adapter, see the detailed setup guide: [OBD-II Bluetooth Setup](../docs/OBD2_BLUETOOTH_SETUP.md)
+
+Quick start:
+```bash
+# 1. Pair your ELM327 adapter
+bluetoothctl
+# ... follow pairing steps ...
+
+# 2. Create RFCOMM connection
+sudo rfcomm bind /dev/rfcomm0 XX:XX:XX:XX:XX:XX 1
+
+# 3. Run simulator with OBD-II
+./digi-dash-simulator --obd2 /dev/rfcomm0
+```
 
 ## Project Structure
 

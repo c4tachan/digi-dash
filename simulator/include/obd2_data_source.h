@@ -86,6 +86,15 @@ private:
     void disconnect();
     
     /**
+     * @brief Send command to ELM327 and read response
+     * @param command Command string to send
+     * @param response Buffer to store response (can be nullptr for commands that don't need response)
+     * @param response_size Size of response buffer
+     * @return true if command succeeded
+     */
+    bool sendCommand(const char* command, char* response, size_t response_size);
+    
+    /**
      * @brief Send OBD II command and parse response
      * @param pid Parameter ID (e.g. 0x0C for RPM)
      * @return Decoded value or -1 on error

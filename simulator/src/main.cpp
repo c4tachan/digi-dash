@@ -128,10 +128,30 @@ static void cleanup() {
  * @brief Main function
  */
 int main(int argc, char* argv[]) {
-    (void)argc;
-    (void)argv;
-    
     printf("Starting Digi-Dash Simulator...\n");
+    
+    // Parse command-line arguments
+    const char* obd2_device = nullptr;
+    bool use_mock = true;
+    
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--obd2") == 0 && i + 1 < argc) {
+            obd2_device = argv[++i];
+            use_mock = false;
+            printf("OBD-II mode: Will connect to %s\n", obd2_device);
+        } else if (strcmp(argv[i], "--mock") == 0) {
+            use_mock = true;
+            printf("Mock data mode enabled\n");
+        } else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+            printf("Usage: %s [options]\n", argv[0]);
+            printf("Options:\n");
+            printf("  --mock              Use mock data generator (default)\n");
+            printf("  --obd2 <device>     Connect to OBD-II adapter at device path\n");
+            printf("                      Examples: /dev/rfcomm0, /dev/ttyUSB0\n");
+            printf("  --help, -h          Show this help message\n");
+            return 0;
+        }
+    }
     
     // Initialize SDL2
     if (!initialize_sdl()) {
@@ -185,14 +205,27 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    // Create data source (mock or real OBD II)
-    // For now, default to MockData. Can be changed via command-line argument later.
-    std::unique_ptr<DataSource> data_source = std::make_unique<MockData>();
-    printf("Using data source: %s\n", data_source->getName());
+    // Create data source (mock or real OBD-II)
+    std::unique_ptr<DataSource> data_source;
     
-    // TODO: Add command-line argument support to choose between:
-    //   --mock (default) - use mock data generator
-    //   --obd2 /dev/rfcomm0 - connect to OBD II adapter
+    if (use_mock) {
+        data_source = std::make_unique<MockData>();
+        printf("Using mock data generator\n");
+    } else if (obd2_device) {
+        // Create PID configuration for standard OBD-II PIDs
+        std::map<std::string, PidConfig> pid_config;
+        pid_config["rpm"] = {"010C", "RPM", "rpm"};
+        pid_config["speed"] = {"010D", "Speed", "km/h"};
+        pid_config["coolant_temp"] = {"0105", "Coolant Temperature", "°C"};
+        
+        data_source = std::make_unique<OBD2DataSource>(obd2_device, pid_config);
+        printf("Attempting OBD-II connection to %s\n", obd2_device);
+    } else {
+        fprintf(stderr, "Error: No data source configured\n");
+        return 1;
+    }
+    
+    printf("Using data source: %s\n", data_source->getName());
     
     // Main event loop
     bool running = true;
