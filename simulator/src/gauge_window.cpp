@@ -197,7 +197,7 @@ GaugeWindow::~GaugeWindow() {
 }
 
 
-void GaugeWindow::update(const MockData& data) {
+void GaugeWindow::update(const DataSource& data) {
     switch (gauge_type_) {
         case GAUGE_RPM:
             if (rpm_gauge_) {

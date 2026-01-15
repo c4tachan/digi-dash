@@ -8,7 +8,7 @@
 
 #include "gauge_window.h"
 #include "config.h"
-#include "mock_data.h"
+#include "data_source.h"
 #include <SDL2/SDL.h>
 #include <vector>
 #include <memory>
@@ -40,9 +40,9 @@ public:
     
     /**
      * @brief Update all windows with new data
-     * @param data Mock data source
+     * @param data Data source (mock or real OBD II)
      */
-    void update(const MockData& data);
+    void update(const DataSource& data);
     
     /**
      * @brief Handle SDL event for all windows

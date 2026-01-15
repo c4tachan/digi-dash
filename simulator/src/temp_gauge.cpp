@@ -47,9 +47,10 @@ TempGauge::~TempGauge() {
     }
 }
 
-void TempGauge::update(uint8_t temp) {
+void TempGauge::update(int temp) {
     // Clamp temperature to 150
     if (temp > 150) temp = 150;
+    if (temp < 0) temp = 0;
     
     // Update bar value
     lv_bar_set_value(bar_, temp, LV_ANIM_OFF);

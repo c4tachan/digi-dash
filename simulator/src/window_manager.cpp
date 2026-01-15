@@ -105,7 +105,7 @@ void WindowManager::removeWindow(uint32_t window_id) {
     }
 }
 
-void WindowManager::update(const MockData& data) {
+void WindowManager::update(const DataSource& data) {
     for (auto& window : windows_) {
         if (window && window->isValid()) {
             window->update(data);

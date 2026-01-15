@@ -18,7 +18,7 @@ public:
      * @brief Update the displayed RPM value
      * @param rpm RPM value (0-8000)
      */
-    void update(uint16_t rpm);
+    void update(int rpm);
     
     /**
      * @brief Get the container widget
@@ -33,3 +33,4 @@ private:
 };
 
 #endif // RPM_GAUGE_H
+

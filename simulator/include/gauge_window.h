@@ -10,7 +10,7 @@
 #include "rpm_gauge.h"
 #include "speed_display.h"
 #include "temp_gauge.h"
-#include "mock_data.h"
+#include "data_source.h"
 #include <SDL2/SDL.h>
 
 class GaugeWindow {
@@ -35,9 +35,9 @@ public:
     
     /**
      * @brief Update gauge with new data
-     * @param data Mock data source
+     * @param data Data source (mock or real OBD II)
      */
-    void update(const MockData& data);
+    void update(const DataSource& data);
     
     /**
      * @brief Render this window

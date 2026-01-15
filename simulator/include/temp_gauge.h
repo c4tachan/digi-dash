@@ -18,7 +18,7 @@ public:
      * @brief Update the displayed temperature value
      * @param temp Temperature in Celsius (0-150)
      */
-    void update(uint8_t temp);
+    void update(int temp);
     
     /**
      * @brief Get the container widget

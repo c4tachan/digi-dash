@@ -6,34 +6,45 @@
 #ifndef MOCK_DATA_H
 #define MOCK_DATA_H
 
+#include "data_source.h"
 #include <cstdint>
 
-class MockData {
+class MockData : public DataSource {
 public:
     MockData();
     
     /**
      * @brief Update the mock data values (call this periodically)
      */
-    void update();
+    void update() override;
     
     /**
      * @brief Get current RPM value
      * @return RPM (0-8000)
      */
-    uint16_t getRPM() const { return rpm_; }
+    int getRPM() const override { return rpm_; }
     
     /**
      * @brief Get current speed value
      * @return Speed in km/h (0-200)
      */
-    uint16_t getSpeed() const { return speed_; }
+    int getSpeed() const override { return speed_; }
     
     /**
      * @brief Get current coolant temperature
      * @return Temperature in Celsius (60-120)
      */
-    uint8_t getCoolantTemp() const { return coolant_temp_; }
+    int getCoolantTemp() const override { return coolant_temp_; }
+    
+    /**
+     * @brief Mock data is always connected
+     */
+    bool isConnected() const override { return true; }
+    
+    /**
+     * @brief Get data source name
+     */
+    const char* getName() const override { return "Mock Data"; }
     
 private:
     uint16_t rpm_;

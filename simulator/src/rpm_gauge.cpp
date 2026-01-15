@@ -51,16 +51,17 @@ RPMGauge::~RPMGauge() {
     }
 }
 
-void RPMGauge::update(uint16_t rpm) {
+void RPMGauge::update(int rpm) {
     // Clamp RPM to 8000
     if (rpm > 8000) rpm = 8000;
+    if (rpm < 0) rpm = 0;
     
     // Update arc value
     lv_arc_set_value(arc_, rpm);
     
     // Update text label
     char buf[16];
-    snprintf(buf, sizeof(buf), "%u", rpm);
+    snprintf(buf, sizeof(buf), "%d", rpm);
     lv_label_set_text(label_, buf);
     
     // Mark for redraw

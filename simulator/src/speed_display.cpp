@@ -43,13 +43,14 @@ SpeedDisplay::~SpeedDisplay() {
     }
 }
 
-void SpeedDisplay::update(uint16_t speed) {
+void SpeedDisplay::update(int speed) {
     // Clamp speed to 300
     if (speed > 300) speed = 300;
+    if (speed < 0) speed = 0;
     
     // Update text label
     char buf[16];
-    snprintf(buf, sizeof(buf), "%u", speed);
+    snprintf(buf, sizeof(buf), "%d", speed);
     lv_label_set_text(speed_label_, buf);
     
     // Mark for redraw

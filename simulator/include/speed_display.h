@@ -18,7 +18,7 @@ public:
      * @brief Update the displayed speed value
      * @param speed Speed in km/h (0-300)
      */
-    void update(uint16_t speed);
+    void update(int speed);
     
     /**
      * @brief Get the container widget

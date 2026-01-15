@@ -8,11 +8,14 @@
 #include "lv_demos.h"
 #include "window_manager.h"
 #include "config.h"
+#include "data_source.h"
 #include "mock_data.h"
+#include "obd2_data_source.h"
 #include <SDL2/SDL.h>
 #include <cstdio>
 #include <cstring>
 #include <unistd.h>
+#include <memory>
 
 // Display configuration
 static const int WINDOW_WIDTH = 1280;
@@ -182,8 +185,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    // Create mock data generator
-    MockData mock_data;
+    // Create data source (mock or real OBD II)
+    // For now, default to MockData. Can be changed via command-line argument later.
+    std::unique_ptr<DataSource> data_source = std::make_unique<MockData>();
+    printf("Using data source: %s\n", data_source->getName());
+    
+    // TODO: Add command-line argument support to choose between:
+    //   --mock (default) - use mock data generator
+    //   --obd2 /dev/rfcomm0 - connect to OBD II adapter
     
     // Main event loop
     bool running = true;
@@ -231,18 +240,18 @@ int main(int argc, char* argv[]) {
             break;
         }
         
-        // Update mock data periodically
+        // Update data source periodically
         uint32_t current_time = SDL_GetTicks();
         if (current_time - last_update >= 50) {  // ~20 FPS updates
-            mock_data.update();
-            window_manager.update(mock_data);
+            data_source->update();
+            window_manager.update(*data_source);
             last_update = current_time;
             frame_count++;
             
             if (frame_count % 20 == 0) {
-                printf("Frame %u - RPM: %u, Speed: %u, Temp: %u°C | Windows: %zu\n", 
-                       frame_count, mock_data.getRPM(), mock_data.getSpeed(), 
-                       mock_data.getCoolantTemp(), window_manager.getWindowCount());
+                printf("Frame %u - RPM: %d, Speed: %d, Temp: %d°C | Windows: %zu\n", 
+                       frame_count, data_source->getRPM(), data_source->getSpeed(), 
+                       data_source->getCoolantTemp(), window_manager.getWindowCount());
                 fflush(stdout);
             }
         }

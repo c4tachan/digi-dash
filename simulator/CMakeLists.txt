@@ -51,6 +51,7 @@ set(SOURCES
     src/speed_display.cpp
     src/temp_gauge.cpp
     src/mock_data.cpp
+    src/obd2_data_source.cpp
 )
 
 # Executable
