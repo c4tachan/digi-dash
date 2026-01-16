@@ -26,13 +26,6 @@ public:
     bool initializeFromConfig(const DashboardConfig& config);
     
     /**
-     * @brief Create and add a new gauge window (legacy API)
-     * @param gauge_type Type of gauge to display
-     * @return True if window was created successfully
-     */
-    bool addGaugeWindow(GaugeWindow::GaugeType gauge_type = GaugeWindow::GAUGE_RPM);
-    
-    /**
      * @brief Remove a window by ID
      * @param window_id SDL window ID
      */
@@ -41,8 +34,9 @@ public:
     /**
      * @brief Update all windows with new data
      * @param data Data source (mock or real OBD II)
+     * @param pid_map Map of PID names to configurations
      */
-    void update(const DataSource& data);
+    void update(const DataSource& data, const std::map<std::string, PidConfig>& pid_map);
     
     /**
      * @brief Handle SDL event for all windows

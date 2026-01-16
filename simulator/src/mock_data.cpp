@@ -17,9 +17,9 @@ MockData::MockData()
 }
 
 void MockData::update() {
-    // Simulate RPM oscillating between 800 and 6000
+    // Simulate RPM oscillating between 800 and 7500 (reaches danger zone)
     rpm_phase_ += 0.02f;
-    rpm_ = static_cast<uint16_t>(3400 + 2600 * std::sin(rpm_phase_));
+    rpm_ = static_cast<uint16_t>(4150 + 3350 * std::sin(rpm_phase_));
     
     // Simulate speed oscillating between 0 and 120 km/h
     speed_phase_ += 0.015f;

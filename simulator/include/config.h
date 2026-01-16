@@ -1,6 +1,6 @@
 /**
  * @file config.h
- * @brief Configuration loader for dashboard windows and OBD II PIDs
+ * @brief Configuration loader for dashboard windows, gauges, and OBD II PIDs
  */
 
 #ifndef CONFIG_H
@@ -19,26 +19,80 @@ struct PidConfig {
     std::string unit;         // Display unit, e.g. "RPM"
 };
 
-struct GaugeConfig {
-    std::string type;  // "rpm", "speed", "temp"
+// Zone colors based on value ranges (for arcs and bars)
+struct Zone {
+    int min;
+    int max;
+    std::string color;        // Hex color, e.g. "#FF0000"
+    std::string label;        // Optional label
+};
+
+// Visual markers on gauges (redlines, ticks, etc.)
+struct Marker {
+    std::string name;
+    int value;
+    std::string style;        // "line", "tick", "dot", "label"
+    std::string color;
+    int width;
+    std::string label;
+};
+
+// Alert thresholds that trigger visual/audio feedback
+struct Alert {
+    int threshold;
+    std::string condition;    // "above", "below", "above_or_equal", "below_or_equal"
+    std::string action;       // "flash", "flash_intense", "shake", "color_pulse"
+    std::string flash_color;  // Color while flashing
+    int flash_rate;           // Milliseconds between flashes
+    std::string label;        // Alert description
+};
+
+// Visual styling properties
+struct VisualConfig {
+    std::map<std::string, std::string> colors;  // color name -> hex value
+    int arc_width;
+    int bar_height;
+    int font_size;
+    int border_width;
+    int decimal_places;
+};
+
+// Complete gauge definition (can be used to create any gauge type)
+struct GaugeDefinition {
+    std::string name;         // Unique identifier
+    std::string type;         // "arc", "digital", "bar", "needle"
+    std::string title;        // Display title
+    std::string data_source;  // PID name, e.g. "rpm"
+    int min;
+    int max;
+    std::string unit;
+    
+    VisualConfig visual;
+    std::vector<Zone> zones;
+    std::vector<Marker> markers;
+    std::vector<Alert> alerts;
+};
+
+// Gauge instance in a display (references a definition)
+struct DashboardElement {
+    std::string gauge_name;   // References a GaugeDefinition by name
     int x;
     int y;
     int width;
     int height;
 };
 
-struct WindowConfig {
-    int id;
-    int x;
-    int y;
+// Single display configuration
+struct DisplayConfig {
     int width;
     int height;
-    std::vector<GaugeConfig> gauges;
+    std::vector<DashboardElement> elements;
 };
 
 struct DashboardConfig {
-    std::map<std::string, PidConfig> pids;  // PID definitions keyed by type ("rpm", "speed", etc)
-    std::vector<WindowConfig> windows;
+    std::map<std::string, PidConfig> pids;              // PID definitions
+    std::map<std::string, GaugeDefinition> gauges;      // Gauge definitions
+    DisplayConfig display;
     
     /**
      * @brief Load configuration from JSON file

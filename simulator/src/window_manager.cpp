@@ -28,22 +28,8 @@ bool WindowManager::initializeFromConfig(const DashboardConfig& config) {
     bool all_success = true;
     
     for (const auto& win_cfg : config.windows) {
-        // Determine gauge type from config
-        GaugeWindow::GaugeType gauge_type = GaugeWindow::GAUGE_RPM;
-        
-        if (!win_cfg.gauges.empty()) {
-            const auto& gauge = win_cfg.gauges[0];
-            if (gauge.type == "speed") {
-                gauge_type = GaugeWindow::GAUGE_SPEED;
-            } else if (gauge.type == "temp") {
-                gauge_type = GaugeWindow::GAUGE_TEMP;
-            }
-        }
-        
         try {
-            auto window = std::make_unique<GaugeWindow>(gauge_type, win_cfg.x, win_cfg.y, 
-                                                        win_cfg.width, win_cfg.height, 
-                                                        next_window_id_);
+            auto window = std::make_unique<GaugeWindow>(win_cfg, config.gauges, next_window_id_);
             
             if (!window->isValid()) {
                 fprintf(stderr, "Failed to create valid gauge window from config\n");
@@ -63,35 +49,6 @@ bool WindowManager::initializeFromConfig(const DashboardConfig& config) {
     return all_success;
 }
 
-bool WindowManager::addGaugeWindow(GaugeWindow::GaugeType gauge_type) {
-    if (windows_.size() >= MAX_WINDOWS) {
-        fprintf(stderr, "Maximum number of windows (%zu) reached\n", MAX_WINDOWS);
-        return false;
-    }
-    
-    int x = 100 + (next_window_id_ * 350);
-    int y = 100;
-    int width = 320;
-    int height = 480;
-    
-    try {
-        auto window = std::make_unique<GaugeWindow>(gauge_type, x, y, width, height, next_window_id_);
-        
-        if (!window->isValid()) {
-            fprintf(stderr, "Failed to create valid gauge window\n");
-            return false;
-        }
-        
-        windows_.push_back(std::move(window));
-        next_window_id_++;
-        
-        printf("Added window #%d. Total windows: %zu/%zu\n", next_window_id_ - 1, windows_.size(), MAX_WINDOWS);
-        return true;
-    } catch (const std::exception& e) {
-        fprintf(stderr, "Exception creating gauge window: %s\n", e.what());
-        return false;
-    }
-}
 
 void WindowManager::removeWindow(uint32_t window_id) {
     auto it = std::find_if(windows_.begin(), windows_.end(),
@@ -105,10 +62,10 @@ void WindowManager::removeWindow(uint32_t window_id) {
     }
 }
 
-void WindowManager::update(const DataSource& data) {
+void WindowManager::update(const DataSource& data, const std::map<std::string, PidConfig>& pid_map) {
     for (auto& window : windows_) {
         if (window && window->isValid()) {
-            window->update(data);
+            window->update(data, pid_map);
         }
     }
 }

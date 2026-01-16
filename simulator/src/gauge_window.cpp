@@ -1,12 +1,10 @@
 /**
  * @file gauge_window.cpp
- * @brief Implementation of gauge window
+ * @brief Implementation of gauge window with factory-created gauges
  */
 
 #include "gauge_window.h"
-#include "rpm_gauge.h"
-#include "speed_display.h"
-#include "temp_gauge.h"
+#include "gauge_factory.h"
 #include <cstdio>
 #include <map>
 #include <memory>
@@ -44,17 +42,18 @@ void GaugeWindow::displayFlushCallback(lv_display_t* disp, const lv_area_t* area
 }
 
 
-GaugeWindow::GaugeWindow(GaugeType gauge_type, int x, int y, int width, int height, int window_id)
+GaugeWindow::GaugeWindow(const WindowConfig& window_config,
+                         const std::map<std::string, GaugeDefinition>& gauge_definitions,
+                         int window_id)
     : window_(nullptr), renderer_(nullptr), texture_(nullptr), display_(nullptr),
-      buf1_(nullptr), buf2_(nullptr), rpm_gauge_(nullptr), speed_display_(nullptr),
-      temp_gauge_(nullptr), screen_(nullptr),
-      width_(width), height_(height), window_id_(window_id), last_x_(0), last_y_(false),
-      gauge_type_(gauge_type) {
+      buf1_(nullptr), buf2_(nullptr), screen_(nullptr),
+      width_(window_config.width), height_(window_config.height), 
+      window_id_(window_id), last_x_(0), last_y_(false), is_pressed_(false) {
     
     // Create SDL window
     window_ = SDL_CreateWindow(
         "Gauge Window",
-        x, y,
+        window_config.x, window_config.y,
         width_, height_,
         SDL_WINDOW_SHOWN
     );
@@ -115,7 +114,7 @@ GaugeWindow::GaugeWindow(GaugeType gauge_type, int x, int y, int width, int heig
     g_window_map[display_] = this;
     lv_display_set_flush_cb(display_, displayFlushCallback);
     
-    // Create main screen to hold the gauge
+    // Create main screen to hold gauges
     screen_ = lv_obj_create(nullptr);
     lv_obj_set_size(screen_, LV_PCT(100), LV_PCT(100));
     lv_obj_set_style_bg_color(screen_, lv_color_hex(0x1a1a1a), 0);
@@ -123,39 +122,34 @@ GaugeWindow::GaugeWindow(GaugeType gauge_type, int x, int y, int width, int heig
     lv_obj_set_flex_align(screen_, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_clear_flag(screen_, LV_OBJ_FLAG_SCROLLABLE);
     
-    // Create gauge based on type
-    switch (gauge_type_) {
-        case GAUGE_RPM:
-            rpm_gauge_ = new RPMGauge(screen_);
-            break;
-        case GAUGE_SPEED:
-            speed_display_ = new SpeedDisplay(screen_);
-            break;
-        case GAUGE_TEMP:
-            temp_gauge_ = new TempGauge(screen_);
-            break;
+    // Create gauges from configuration
+    for (const auto& gauge_cfg : window_config.gauges) {
+        // Find the gauge definition
+        auto def_it = gauge_definitions.find(gauge_cfg.gauge_name);
+        if (def_it == gauge_definitions.end()) {
+            fprintf(stderr, "Gauge definition not found: %s\n", gauge_cfg.gauge_name.c_str());
+            continue;
+        }
+        
+        // Create gauge from definition
+        Gauge* gauge = GaugeFactory::createGauge(screen_, def_it->second);
+        if (gauge) {
+            gauges_.push_back(std::unique_ptr<Gauge>(gauge));
+            printf("Added gauge %s to window %d\n", gauge_cfg.gauge_name.c_str(), window_id_);
+        } else {
+            fprintf(stderr, "Failed to create gauge: %s\n", gauge_cfg.gauge_name.c_str());
+        }
     }
     
     lv_screen_load(screen_);
     
-    printf("Created gauge window %d at (%d, %d) with size %dx%d\n", 
-           window_id_, x, y, width_, height_);
+    printf("Created gauge window %d at (%d, %d) with size %dx%d containing %zu gauges\n", 
+           window_id_, window_config.x, window_config.y, width_, height_, gauges_.size());
 }
 
 GaugeWindow::~GaugeWindow() {
-    // Clean up gauge objects
-    if (rpm_gauge_) {
-        delete rpm_gauge_;
-        rpm_gauge_ = nullptr;
-    }
-    if (speed_display_) {
-        delete speed_display_;
-        speed_display_ = nullptr;
-    }
-    if (temp_gauge_) {
-        delete temp_gauge_;
-        temp_gauge_ = nullptr;
-    }
+    // Clear gauges vector (unique_ptr will delete them)
+    gauges_.clear();
     
     if (display_) {
         g_window_map.erase(display_);
@@ -197,23 +191,24 @@ GaugeWindow::~GaugeWindow() {
 }
 
 
-void GaugeWindow::update(const DataSource& data) {
-    switch (gauge_type_) {
-        case GAUGE_RPM:
-            if (rpm_gauge_) {
-                rpm_gauge_->update(data.getRPM());
-            }
-            break;
-        case GAUGE_SPEED:
-            if (speed_display_) {
-                speed_display_->update(data.getSpeed());
-            }
-            break;
-        case GAUGE_TEMP:
-            if (temp_gauge_) {
-                temp_gauge_->update(data.getCoolantTemp());
-            }
-            break;
+void GaugeWindow::update(const DataSource& data, const std::map<std::string, PidConfig>& pid_map) {
+    // Map PID names to values from data source
+    // This is a simple lookup - in reality you'd need to decode the raw OBD II values
+    std::map<std::string, int> data_values;
+    data_values["rpm"] = data.getRPM();
+    data_values["speed"] = data.getSpeed();
+    data_values["coolant_temp"] = data.getCoolantTemp();
+    data_values["temp"] = data.getCoolantTemp();  // Alias
+    
+    // Update all gauges with their respective data
+    for (auto& gauge : gauges_) {
+        const auto& def = gauge->getDefinition();
+        
+        // Find the value for this gauge's data source
+        auto value_it = data_values.find(def.data_source);
+        if (value_it != data_values.end()) {
+            gauge->update(value_it->second);
+        }
     }
 }
 

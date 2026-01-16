@@ -1,43 +1,39 @@
 /**
  * @file gauge_window.h
- * @brief A standalone window for displaying a single gauge
+ * @brief A standalone window for displaying gauges
  */
 
 #ifndef GAUGE_WINDOW_H
 #define GAUGE_WINDOW_H
 
 #include "lvgl.h"
-#include "rpm_gauge.h"
-#include "speed_display.h"
-#include "temp_gauge.h"
+#include "gauge.h"
+#include "config.h"
 #include "data_source.h"
 #include <SDL2/SDL.h>
+#include <vector>
+#include <memory>
+#include <map>
 
 class GaugeWindow {
 public:
-    enum GaugeType {
-        GAUGE_RPM = 0,
-        GAUGE_SPEED = 1,
-        GAUGE_TEMP = 2
-    };
-    
     /**
-     * @brief Create a new gauge window
-     * @param gauge_type Type of gauge to display
-     * @param x Window X position
-     * @param y Window Y position
-     * @param width Window width
-     * @param height Window height
+     * @brief Create a new gauge window from window configuration
+     * @param window_config Window configuration with gauge instances
+     * @param gauge_definitions Map of all available gauge definitions
      * @param window_id Unique identifier for this window
      */
-    GaugeWindow(GaugeType gauge_type, int x, int y, int width, int height, int window_id);
+    GaugeWindow(const WindowConfig& window_config, 
+                const std::map<std::string, GaugeDefinition>& gauge_definitions,
+                int window_id);
     ~GaugeWindow();
     
     /**
-     * @brief Update gauge with new data
+     * @brief Update all gauges with new data
      * @param data Data source (mock or real OBD II)
+     * @param pid_map Map of PID names to values
      */
-    void update(const DataSource& data);
+    void update(const DataSource& data, const std::map<std::string, PidConfig>& pid_map);
     
     /**
      * @brief Render this window
@@ -65,11 +61,6 @@ public:
     int getHeight() const { return height_; }
     
     /**
-     * @brief Get current gauge type
-     */
-    GaugeType getCurrentGaugeType() const { return gauge_type_; }
-    
-    /**
      * @brief Handle SDL events for this window (mouse clicks, key presses, etc.)
      * @param event SDL event to process
      * @return true if event was handled by this window
@@ -85,10 +76,8 @@ private:
     void* buf1_;
     void* buf2_;
     
-    // Gauge objects
-    RPMGauge* rpm_gauge_;
-    SpeedDisplay* speed_display_;
-    TempGauge* temp_gauge_;
+    // Gauges in this window
+    std::vector<std::unique_ptr<Gauge>> gauges_;
     
     lv_obj_t* screen_;
     
@@ -98,11 +87,7 @@ private:
     int last_x_;
     int last_y_;
     bool is_pressed_;
-    GaugeType gauge_type_;
     
-    /**
-     * @brief Display flush callback
-     */
     static void displayFlushCallback(lv_display_t* disp, const lv_area_t* area, uint8_t* px_map);
 };
 

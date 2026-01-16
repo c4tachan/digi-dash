@@ -45,8 +45,9 @@ include_directories(
 set(SOURCES
     src/main.cpp
     src/config.cpp
-    src/gauge_window.cpp
-    src/window_manager.cpp
+    src/gauge.cpp
+    src/gauge_factory.cpp
+    src/dashboard.cpp
     src/rpm_gauge.cpp
     src/speed_display.cpp
     src/temp_gauge.cpp
