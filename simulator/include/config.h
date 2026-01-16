@@ -20,6 +20,12 @@ struct ProtocolConfig {
     std::string description;  // Human-readable description
 };
 
+// Unit system configuration
+struct UnitConfig {
+    std::string system;       // "metric" or "sae"
+    std::string description;  // Human-readable description
+};
+
 struct PidConfig {
     std::string command;      // OBD II command, e.g. "010C"
     std::string formula;      // Decoding formula, e.g. "((A*256)+B)/4" for RPM
@@ -98,6 +104,7 @@ struct DisplayConfig {
 
 struct DashboardConfig {
     ProtocolConfig protocol;                            // OBD II protocol configuration
+    UnitConfig units;                                   // Unit system configuration
     std::map<std::string, PidConfig> pids;              // PID definitions
     std::map<std::string, GaugeDefinition> gauges;      // Gauge definitions
     DisplayConfig display;

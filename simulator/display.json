@@ -4,6 +4,10 @@
     "baudrate": 500000,
     "description": "CAN ISO 15765-4 (500 kbaud) - 2012+ vehicles. Change to 'KWP2000' for 2002 MR2 Spyder"
   },
+  "units": {
+    "system": "metric",
+    "description": "Display unit system: 'metric' for km/h, °C or 'sae' for mph, °F"
+  },
   "pids": {
     "rpm": {
       "command": "010C",

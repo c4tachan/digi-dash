@@ -49,6 +49,22 @@ DashboardConfig DashboardConfig::loadFromString(const std::string& json_str) {
             printf("No protocol specified, using default: CAN @ 500000 baud\n");
         }
         
+        // Parse unit system configuration
+        if (j.contains("units") && j["units"].is_object()) {
+            const auto& units_json = j["units"];
+            config.units.system = units_json.value("system", "metric");
+            config.units.description = units_json.value("description", "");
+            
+            printf("Loaded units: %s\n", config.units.system.c_str());
+            if (!config.units.description.empty()) {
+                printf("  %s\n", config.units.description.c_str());
+            }
+        } else {
+            // Default to metric
+            config.units.system = "metric";
+            printf("No units specified, using default: metric (km/h, °C)\n");
+        }
+        
         // Parse PID definitions
         if (j.contains("pids") && j["pids"].is_object()) {
             for (auto& [key, pid_json] : j["pids"].items()) {
