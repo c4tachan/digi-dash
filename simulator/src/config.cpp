@@ -30,6 +30,25 @@ DashboardConfig DashboardConfig::loadFromString(const std::string& json_str) {
     try {
         json j = json::parse(json_str);
         
+        // Parse protocol configuration
+        if (j.contains("protocol") && j["protocol"].is_object()) {
+            const auto& protocol_json = j["protocol"];
+            config.protocol.type = protocol_json.value("type", "CAN");
+            config.protocol.baudrate = protocol_json.value("baudrate", 500000);
+            config.protocol.description = protocol_json.value("description", "");
+            
+            printf("Loaded protocol: %s @ %d baud\n", 
+                   config.protocol.type.c_str(), config.protocol.baudrate);
+            if (!config.protocol.description.empty()) {
+                printf("  %s\n", config.protocol.description.c_str());
+            }
+        } else {
+            // Default CAN configuration
+            config.protocol.type = "CAN";
+            config.protocol.baudrate = 500000;
+            printf("No protocol specified, using default: CAN @ 500000 baud\n");
+        }
+        
         // Parse PID definitions
         if (j.contains("pids") && j["pids"].is_object()) {
             for (auto& [key, pid_json] : j["pids"].items()) {

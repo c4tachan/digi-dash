@@ -45,9 +45,9 @@ int main(int argc, char* argv[]) {
     printf("LVGL initialized successfully\n");
     
     // Load configuration from JSON file
-    DashboardConfig config = DashboardConfig::loadFromFile("dashboard.json");
+    DashboardConfig config = DashboardConfig::loadFromFile("display.json");
     if (config.display.elements.empty()) {
-        fprintf(stderr, "Failed to load configuration from dashboard.json\n");
+        fprintf(stderr, "Failed to load configuration from display.json\n");
         return 1;
     }
     

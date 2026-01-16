@@ -58,12 +58,12 @@ set(SOURCES
 # Executable
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-# Copy dashboard.json to build directory
+# Copy display.json to build directory
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
-    ${CMAKE_CURRENT_SOURCE_DIR}/dashboard.json
-    ${CMAKE_CURRENT_BINARY_DIR}/dashboard.json
-    COMMENT "Copying dashboard.json to build directory"
+    ${CMAKE_CURRENT_SOURCE_DIR}/display.json
+    ${CMAKE_CURRENT_BINARY_DIR}/display.json
+    COMMENT "Copying display.json to build directory"
 )
 
 # Link libraries

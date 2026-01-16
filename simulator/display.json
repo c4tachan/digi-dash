@@ -1,4 +1,9 @@
 {
+  "protocol": {
+    "type": "CAN",
+    "baudrate": 500000,
+    "description": "CAN ISO 15765-4 (500 kbaud) - 2012+ vehicles. Change to 'KWP2000' for 2002 MR2 Spyder"
+  },
   "pids": {
     "rpm": {
       "command": "010C",

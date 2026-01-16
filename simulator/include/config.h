@@ -13,6 +13,13 @@
 
 using json = nlohmann::json;
 
+// OBD II Protocol configuration
+struct ProtocolConfig {
+    std::string type;         // "CAN", "KWP2000", "ISO9141", etc.
+    int baudrate;             // e.g. 500000 for CAN, 10400 for KWP2000
+    std::string description;  // Human-readable description
+};
+
 struct PidConfig {
     std::string command;      // OBD II command, e.g. "010C"
     std::string formula;      // Decoding formula, e.g. "((A*256)+B)/4" for RPM
@@ -90,6 +97,7 @@ struct DisplayConfig {
 };
 
 struct DashboardConfig {
+    ProtocolConfig protocol;                            // OBD II protocol configuration
     std::map<std::string, PidConfig> pids;              // PID definitions
     std::map<std::string, GaugeDefinition> gauges;      // Gauge definitions
     DisplayConfig display;
