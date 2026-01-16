@@ -86,3 +86,8 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 
 # Enable debugging symbols
 set(CMAKE_BUILD_TYPE Debug)
+# Enable testing
+enable_testing()
+
+# Add tests subdirectory (out-of-tree, so need explicit build dir)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../tests ${CMAKE_CURRENT_BINARY_DIR}/../tests)
