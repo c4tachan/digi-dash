@@ -41,6 +41,9 @@ Digi-Dash is an automotive dashboard display system designed for embedded system
 - **FR-2.4.3**: Configuration shall specify PID definitions and formulas
 - **FR-2.4.4**: Configuration shall specify gauge definitions, zones, alerts
 - **FR-2.4.5**: Configuration shall support comments and descriptions
+- **FR-2.4.6**: Configuration shall allow selection of unit system (metric or SAE)
+- **FR-2.4.7**: System shall display speed in km/h when metric, mph when SAE
+- **FR-2.4.8**: System shall display temperature in °C when metric, °F when SAE
 
 ### 2.5 Data Source Support
 - **FR-2.5.1**: System shall support mock data generator for testing/simulation
