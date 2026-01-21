@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="720"
+   height="720"
+   viewBox="0 0 190.5 190.5"
+   version="1.1"
+   id="svg1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <rect
+       x="216.99265"
+       y="386.69204"
+       width="300.45137"
+       height="151.61666"
+       id="rect3" />
+    <rect
+       x="171.09036"
+       y="208.64678"
+       width="363.0454"
+       height="275.41375"
+       id="rect2" />
+  </defs>
+  <g
+     id="layer1">
+    <circle
+       style="fill:#000000;stroke-width:0.264583"
+       id="path1"
+       cx="95.25"
+       cy="95.25"
+       r="95.25" />
+    <text
+       xml:space="preserve"
+       transform="scale(0.26458333)"
+       id="text2"
+       style="writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect2);display:inline;fill:#ffffff" />
+    <text
+       xml:space="preserve"
+       transform="scale(0.26458333)"
+       id="text3"
+       style="font-size:192px;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect3);display:inline;fill:#ffffff" />
+    <text
+       xml:space="preserve"
+       style="font-size:54.4373px;writing-mode:lr-tb;direction:ltr;fill:#ffffff;stroke-width:0.567054"
+       x="43.311287"
+       y="127.16147"
+       id="speed-value"><tspan
+         id="tspan4"
+         style="font-size:54.4373px;stroke-width:0.567054"
+         x="43.311287"
+         y="127.16147">000</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:16.9333px;writing-mode:lr-tb;direction:ltr;fill:#ffffff;stroke-width:0.264583"
+       x="76.646523"
+       y="145.37175"
+       id="speed-label"><tspan
+         id="tspan5"
+         style="stroke-width:0.264583"
+         x="76.646523"
+         y="145.37175">MPH</tspan></text>
+    <path
+       style="fill:none;stroke:#999999;stroke-width:1.32292;stroke-dasharray:none"
+       id="rpm-path"
+       d="M 46.687002,164.60487 A 84.667,84.666664 0 0 1 23.842578,49.758632 84.667,84.666664 0 0 1 137.5835,21.92652" />
+    <text
+       xml:space="preserve"
+       style="font-size:12.7px;writing-mode:lr-tb;direction:ltr;fill:none;stroke:#999999;stroke-width:1.32292;stroke-dasharray:none"
+       x="79.095947"
+       y="173.71002"
+       id="rpm-value"><tspan
+         id="tspan6"
+         style="stroke-width:1.32292"
+         x="79.095947"
+         y="173.71002">0000</tspan></text>
+    <path
+       style="fill:none;stroke:#999999;stroke-width:1.32292;stroke-dasharray:none"
+       id="temp-path-reversed"
+       d="m 160.10843,40.827317 a 84.666664,84.666664 0 0 1 0,108.845363" />
+    <text
+       xml:space="preserve"
+       style="font-size:12.7px;writing-mode:lr-tb;direction:ltr;fill:none;stroke:#999999;stroke-width:1.32292;stroke-dasharray:none"
+       x="164.50929"
+       y="99.86367"
+       id="temp-value"><tspan
+         id="tspan7"
+         style="stroke-width:1.32292"
+         x="164.50929"
+         y="99.86367">000</tspan></text>
+  </g>
+</svg>

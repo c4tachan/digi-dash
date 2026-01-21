@@ -4,8 +4,6 @@
  */
 
 #include "lvgl.h"
-#include "lv_examples.h"
-#include "lv_demos.h"
 #include "dashboard.h"
 #include "config.h"
 #include "data_source.h"
