@@ -114,32 +114,23 @@ void app_main(void)
     xTaskCreate(example_lvgl_port_task, "LVGL", 4096, NULL, 2, NULL);
 
     // Create UI
-    if (example_lvgl_lock(0)) {
+    if (example_lvgl_lock(-1)) {
         lv_obj_t *scr = lv_screen_active();
         lv_obj_set_style_bg_color(scr, lv_color_black(), 0);
         
-        // Add title label
-        lv_obj_t *title = lv_label_create(scr);
-        lv_label_set_text(title, "Digi-Dash");
-        lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 20);
-        lv_obj_set_style_text_color(title, lv_color_white(), 0);
+        // Add "Hello World!" label
+        lv_obj_t *label = lv_label_create(scr);
+        lv_label_set_text(label, "Hello World!");
+        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_set_style_text_color(label, lv_color_white(), 0);
         
-        // Add subtitle
-        lv_obj_t *subtitle = lv_label_create(scr);
-        lv_label_set_text(subtitle, "ESP32-S3 in QEMU");
-        lv_obj_align(subtitle, LV_ALIGN_CENTER, 0, -20);
-        lv_obj_set_style_text_color(subtitle, lv_color_white(), 0);
-        
-        // Add status label
-        lv_obj_t *status = lv_label_create(scr);
-        lv_label_set_text(status, "Running...");
-        lv_obj_align(status, LV_ALIGN_BOTTOM_MID, 0, -20);
-        lv_obj_set_style_text_color(status, lv_color_make(0, 255, 255), 0);
+        // Force a refresh
+        lv_obj_invalidate(scr);
         
         example_lvgl_unlock();
     }
     
-    ESP_LOGI(TAG, "Dashboard initialized successfully");
+    ESP_LOGI(TAG, "Hello World! displayed on screen");
 
     // Main loop
     while (1) {
