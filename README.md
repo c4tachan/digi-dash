@@ -1,35 +1,89 @@
-| Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C5 | ESP32-C6 | ESP32-H2 | ESP32-P4 | ESP32-S2 | ESP32-S3 |
-| ----------------- | ----- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
+# Digi-Dash: ESP32-S3 Digital Dashboard
 
-# _Sample project_
+A digital dashboard application for ESP32-S3 with LVGL graphics, designed to run on real hardware or in QEMU emulation.
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+| Supported Targets | ESP32-S3 |
+| ----------------- | -------- |
 
-This is the simplest buildable example. The example is used by command `idf.py create-project`
-that copies the project to user specified path and set it's name. For more information follow the [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project)
+## Features
 
+- **LVGL 9** graphics library with 320×240 RGB565 display
+- **QEMU emulation** with SDL graphics output for development
+- **ESP32-S3** native support via ESP-IDF 5.5.2
+- **Component-based** architecture for easy extension
+- **Desktop simulator** for rapid UI prototyping
 
+## Quick Start
 
-## How to use example
-We encourage the users to use the example as a template for the new projects.
-A recommended way is to follow the instructions on a [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project).
+### Prerequisites
 
-## Example folder contents
+- **ESP-IDF v5.5.2** - [Installation Guide](https://docs.espressif.com/projects/esp-idf/en/v5.5.2/esp32s3/get-started/index.html)
+- **QEMU (Espressif fork)** - Built from source with ESP32-S3 RGB support
+- **Linux/WSL2** environment (for QEMU graphics)
 
-The project **sample_project** contains one source file in C language [main.c](main/main.c). The file is located in folder [main](main).
+### Build and Run in QEMU
 
-ESP-IDF projects are built using CMake. The project build configuration is contained in `CMakeLists.txt`
-files that provide set of directives and instructions describing the project's source files and targets
-(executable, library, or both). 
+```bash
+# Setup ESP-IDF environment
+. ~/esp-idf-5.5.2/export.sh
 
-Below is short explanation of remaining files in the project folder.
+# Build firmware
+idf.py build
+
+# Run in QEMU with graphics window
+idf.py qemu --graphics monitor
+```
+
+An SDL window will open showing the dashboard display. Press `Ctrl+]` to exit the monitor.
+
+### Flash to Real Hardware
+
+```bash
+# Setup ESP-IDF environment
+. ~/esp-idf-5.5.2/export.sh
+
+# Build and flash
+idf.py -p /dev/ttyUSB0 flash monitor
+```
+
+## Project Structure
 
 ```
-├── CMakeLists.txt
-├── main
-│   ├── CMakeLists.txt
-│   └── main.c
-└── README.md                  This is the file you are currently reading
+├── main/                      # Main ESP32 application
+│   ├── main.c                # Application entry point with LVGL setup
+│   ├── idf_component.yml     # Component dependencies (LVGL, esp_lcd_qemu_rgb)
+│   └── CMakeLists.txt
+├── simulator/                 # Desktop SDL2 simulator
+│   ├── src/                  # Simulator source code
+│   ├── include/              # Headers
+│   └── CMakeLists.txt
+├── components/                # Custom ESP-IDF components
+├── docs/                      # Documentation
+└── tests/                     # Unit tests
 ```
-Additionally, the sample project contains Makefile and component.mk files, used for the legacy Make based build system. 
-They are not used or needed when building with CMake and idf.py.
+
+## Development Workflow
+
+1. **Prototype UI** - Use desktop simulator for fast iteration
+2. **Test in QEMU** - Verify ESP32-S3 integration with `idf.py qemu --graphics`
+3. **Deploy to hardware** - Flash to real ESP32-S3 device
+
+## Configuration
+
+The LVGL display is configured in `main/main.c`:
+- Resolution: 320×240 pixels
+- Color depth: RGB565 (16-bit)
+- Buffer: 10 lines (partial rendering)
+
+## Dependencies
+
+Managed via ESP-IDF Component Manager (`main/idf_component.yml`):
+- `espressif/esp_lcd_qemu_rgb` - QEMU virtual framebuffer driver
+- `lvgl/lvgl` - LVGL graphics library v9.x
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Testing Guide](docs/TESTING.md)
+- [Safety Considerations](docs/SAFETY.md)
+- [Setup Complete Guide](SETUP_COMPLETE.md)

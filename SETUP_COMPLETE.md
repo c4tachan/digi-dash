@@ -2,151 +2,158 @@
 
 ## ✅ What's Been Set Up
 
-### 1. **ESP32-S3 QEMU (esp-qemu)**
-- Virtual RGB framebuffer via SDL
-- Run firmware locally without hardware
-- Location: installed via ESP-IDF tools (esp-qemu)
-
-### 2. **ESP-IDF** v5.3.1
-- Complete ESP32 development framework
-- Toolchain for ESP32
+### 1. **ESP-IDF v5.5.2**
+- Complete ESP32-S3 development framework
+- xtensa-esp32s3-elf toolchain (esp-14.2.0)
 - Python environment configured
-- Location: `~/esp/esp-idf/`
+- Location: `~/esp-idf-5.5.2/`
 
-### 3. **SDL2 Simulator**
-- LVGL v9 with ThorVG support enabled
-- SVG rendering capabilities
-- Quick UI testing without hardware
+### 2. **QEMU (Espressif Fork) v9.2.2**
+- Built from source with ESP32-S3 RGB framebuffer support
+- SDL2 display backend enabled
+- xtensa-softmmu target compiled
+- Location: `~/qemu-esp-develop/build/qemu-system-xtensa`
+- Added to PATH via `~/.bashrc`
+
+### 3. **ESP32-S3 Firmware Project**
+- LVGL v9.4.0 graphics library
+- esp_lcd_qemu_rgb virtual framebuffer driver
+- 320×240 RGB565 display configuration
+- FreeRTOS task-based LVGL rendering
+- Location: `main/`
+
+### 4. **Desktop Simulator** (Optional)
+- SDL2-based LVGL simulator
+- Quick UI prototyping without ESP-IDF
 - Location: `simulator/`
-
-### 4. **ESP32 Firmware Project**
-- LVGL v9 + ThorVG configured
-- ESP-IDF project structure
-- SPIFFS for SVG assets
-- Ready to flash or simulate
-- Location: `esp32-qemu/digi-dash-esp32/`
 
 ## 🚀 Quick Start Commands
 
-### Test SDL2 Simulator
+### Build and Run in QEMU with Graphics
+
 ```bash
-cd simulator/build
-timeout 5 ./digi-dash-simulator
+cd ~/projects/digi-dash
+. ~/esp-idf-5.5.2/export.sh
+idf.py qemu --graphics monitor
 ```
 
-### Build ESP32 Firmware
+This will:
+- Build the firmware if needed
+- Launch QEMU with SDL graphics window (320×240)
+- Open serial monitor for logs
+- Show your LVGL dashboard UI
+
+**Controls:**
+- `Ctrl+]` - Exit monitor (QEMU keeps running)
+- `Ctrl+C` twice - Fully exit
+
+### Build Only
+
 ```bash
-cd esp32-qemu/digi-dash-esp32
-. ~/esp/esp-idf/export.sh
+cd ~/projects/digi-dash
+. ~/esp-idf-5.5.2/export.sh
 idf.py build
 ```
 
-### Run in QEMU (GUI)
+### Clean Build
+
 ```bash
-cd esp32-qemu/digi-dash-esp32
-. ~/esp/esp-idf/export.sh
-idf.py qemu -- -display sdl -serial stdio
+idf.py fullclean
+idf.py build
 ```
 
-### Flash to Hardware
+### Flash to Real Hardware
+
 ```bash
-cd esp32-qemu/digi-dash-esp32
-. ~/esp/esp-idf/export.sh
+# Find your ESP32-S3 device
+ls /dev/ttyUSB* /dev/ttyACM*
+
+# Flash and monitor
 idf.py -p /dev/ttyUSB0 flash monitor
 ```
 
-## 📋 COPILOT_CONTEXT.md Updated
-
-The `COPILOT_CONTEXT.md` file has been completely updated with:
-
-✅ **Autonomous Setup Instructions** - Step-by-step commands to set up everything from scratch  
-✅ **All Dependencies Listed** - esp-qemu, ESP-IDF, SDL2, build tools  
-✅ **Build Commands** - For both simulator and ESP32 firmware  
-✅ **Testing Procedures** - How to run in simulator and QEMU  
-✅ **Common Issues & Solutions** - Known problems and fixes  
-✅ **Technical Details** - LVGL config, file systems, display setup  
-
-### What This Means for You
-
-**When you clone this repo on a new machine**, just ask Copilot:
-
-> "Set up the digi-dash development environment"
-
-And Copilot will:
-1. Read COPILOT_CONTEXT.md
-2. Check what's installed
-3. Install missing dependencies (esp-qemu, ESP-IDF, etc.)
-4. Build both simulator and ESP32 firmware
-5. Run tests to verify everything works
-6. Report status
-
-**No manual steps required!**
-
-## 📁 Project Structure
+## 📂 Project Structure
 
 ```
 digi-dash/
-├── COPILOT_CONTEXT.md          # ⭐ COMPLETE SETUP GUIDE
-├── simulator/                   # SDL2 LVGL simulator
-│   ├── build/
-│   │   └── digi-dash-simulator  # Built binary
-│   ├── lv_conf.h                # LVGL config (ThorVG enabled)
-│   └── src/main.cpp
-├── esp32-qemu/                  # ESP32 firmware + QEMU helper
-│   ├── digi-dash-esp32/         # ESP-IDF project
-│   │   ├── main/
-│   │   │   ├── main.c           # ESP32 application
-│   │   │   └── lv_conf.h        # LVGL config
-│   │   ├── build/
-│   │   │   └── digi-dash-esp32.elf  # Built firmware
-│   │   └── idf_component.yml    # LVGL dependencies
-│   └── run-qemu-s3.sh           # QEMU launch helper
-└── assets/
-    └── dashboard.svg            # SVG dashboard asset
+├── main/
+│   ├── main.c              # Application entry with LVGL setup
+│   ├── idf_component.yml   # Dependencies (LVGL, esp_lcd_qemu_rgb)
+│   └── CMakeLists.txt
+├── simulator/              # Desktop SDL2 simulator
+├── components/             # Custom ESP-IDF components
+├── docs/                   # Documentation
+└── tests/                  # Unit tests
 ```
 
-## 🎯 Next Steps
+## 🔧 QEMU Build Details
 
-1. **Design SVG Dashboard**
-   - Create dashboard layout in Inkscape or similar
-   - Export as SVG
-   - Place in `assets/`
+The custom QEMU build includes:
+- **Source:** Espressif fork (esp-develop branch)
+- **Target:** xtensa-softmmu (ESP32-S3 machine type)
+- **Display:** SDL2 backend for RGB framebuffer
+- **Network:** SLIRP user networking
+- **RGB Device:** Virtual framebuffer at 0x20000000 (320×240, RGB565)
 
-2. **Test SVG Rendering**
-   - Load SVG in SDL2 simulator first
-   - Fix file system driver for simulator
-   - Test in QEMU with ESP32 firmware
+## 🎨 LVGL Configuration
 
-3. **Configure Display Driver**
-   - Select display type (ILI9341, ST7789, etc.)
-   - Configure SPI pins in `idf.py menuconfig`
-   - Test on actual hardware
+Current setup in `main/main.c`:
+- **Display:** 320×240 pixels
+- **Color:** RGB565 (16-bit)
+- **Buffer:** 10 lines (3,200 pixels × 2 bytes = 6,400 bytes)
+- **Render Mode:** Partial (line-by-line)
+- **Task:** 5ms handler loop, 4KB stack
 
-4. **Add SPIFFS Partition**
-   - Create SPIFFS image with SVG files
-   - Flash to ESP32 with firmware
-   - Access via 'S:' driver in LVGL
+## 📝 Component Dependencies
 
-5. **Integrate Data Sources**
-   - Add OBD-II/CAN readers
-   - Update dashboard with real-time data
-   - Test responsiveness
+Managed via ESP-IDF Component Manager:
 
-## 💡 Tips
+```yaml
+dependencies:
+  espressif/esp_lcd_qemu_rgb: "^1.0.0"
+  lvgl/lvgl: "^9.2.2"
+```
 
-- **Always source ESP-IDF**: Run `. ~/esp/esp-idf/export.sh` in each new terminal
-- **Use timeout for testing**: `timeout 5 ./digi-dash-simulator` prevents hanging
-- **Test in order**: SDL2 → QEMU → Hardware
-- **Check COPILOT_CONTEXT.md**: It has solutions to common issues
+Components downloaded to `managed_components/` on first build.
 
 ## 🐛 Troubleshooting
 
-All common issues and solutions are documented in `COPILOT_CONTEXT.md`:
-- "unknown driver letter" errors
-- ThorVG build issues
-- QEMU display problems
-- ESP-IDF environment issues
+### QEMU window doesn't appear
+```bash
+# Check QEMU is in PATH
+which qemu-system-xtensa
 
----
+# Should show: /home/catachan/qemu-esp-develop/build/qemu-system-xtensa
+```
 
-**Everything is ready! Start building your SVG dashboard!** 🚗💨
+### Build errors about missing components
+```bash
+# Clean and rebuild to fetch components
+idf.py fullclean
+idf.py build
+```
+
+### SDL display error
+```bash
+# Ensure DISPLAY is set (WSL2)
+echo $DISPLAY
+
+# Check SDL2 libraries
+ldconfig -p | grep SDL2
+```
+
+## 🔗 Resources
+
+- [ESP-IDF Documentation](https://docs.espressif.com/projects/esp-idf/en/v5.5.2/)
+- [LVGL Documentation](https://docs.lvgl.io/9.4/)
+- [Espressif QEMU](https://github.com/espressif/qemu)
+- [esp_lcd_qemu_rgb Component](https://components.espressif.com/components/espressif/esp_lcd_qemu_rgb)
+
+## 🎯 Next Steps
+
+1. **Customize UI** - Edit `main/main.c` to add widgets, gauges, graphs
+2. **Add data sources** - Integrate sensors, OBD2, or mock data
+3. **Test in simulator** - Use `simulator/` for rapid UI iteration
+4. **Deploy to hardware** - Flash to real ESP32-S3 with TFT display
+
+Happy coding! 🚀
