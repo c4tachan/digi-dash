@@ -53,6 +53,8 @@ set(SOURCES
     src/temp_gauge.cpp
     src/mock_data.cpp
     src/obd2_data_source.cpp
+    # LVGL filesystem drivers
+    lib/lvgl/src/libs/fsdrv/lv_fs_posix.c
 )
 
 # Executable

@@ -8,6 +8,13 @@
 
 #include <stdint.h>
 
+// Enable SVG and vector graphics support
+#define LV_USE_FLOAT 1
+#define LV_USE_MATRIX 1
+#define LV_USE_VECTOR_GRAPHIC 1
+#define LV_USE_SVG 1
+#define LV_USE_THORVG_INTERNAL 1
+
 /*====================
    COLOR SETTINGS
  *====================*/
@@ -35,6 +42,17 @@
 
 /* Disable ARM-specific ASM optimizations for x86_64 */
 #define LV_USE_DRAW_SW_ASM 0
+
+/*====================
+   FILESYSTEM
+ *====================*/
+
+/* Enable POSIX filesystem driver for simulator */
+#define LV_USE_FS_POSIX 1
+#if LV_USE_FS_POSIX
+#define LV_FS_POSIX_LETTER 'P'
+#define LV_FS_POSIX_PATH   ""
+#endif
 
 /*=================
    LOG SETTINGS
