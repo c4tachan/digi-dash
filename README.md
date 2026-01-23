@@ -66,7 +66,23 @@ idf.py -p /dev/ttyUSB0 flash monitor
 
 1. **Prototype UI** - Use desktop simulator for fast iteration
 2. **Test in QEMU** - Verify ESP32-S3 integration with `idf.py qemu --graphics`
-3. **Deploy to hardware** - Flash to real ESP32-S3 device
+3. **Run unit tests** - Validate core functionality: `cd test_app && idf.py qemu monitor`
+4. **Deploy to hardware** - Flash to real ESP32-S3 device
+
+## Testing
+
+### Unit Tests
+
+ESP-IDF Unity tests for core functionality:
+
+```bash
+cd test_app
+. ~/esp-idf-5.5.2/export.sh
+idf.py build
+idf.py qemu monitor
+```
+
+See [ESP32 Testing Guide](docs/ESP32_TESTING.md) for details.
 
 ## Configuration
 
