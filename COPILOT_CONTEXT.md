@@ -1,271 +1,201 @@
-# Digi-Dash Project — Development Context for GitHub Copilot
+# Digi-Dash Project — Architecture & Development Instructions for GitHub Copilot
 
-This project is a custom multi-display automotive dashboard for a Toyota MR2 Spyder. 
-The dashboard will run on an ESP32 and render gauges using LVGL with SVG support via ThorVG. 
-Development is happening on Linux, with simulation options:
-1. SDL2-based PC simulator for quick UI testing
-2. ESP32-S3 QEMU (virtual RGB framebuffer) for firmware bring-up
-3. Physical ESP32 hardware deployment
+## Overview
+This repository contains the codebase for a fully customizable automotive digital dashboard system. The system includes:
 
-## Goals
-- Build a modular, maintainable C++ codebase.
-- Use LVGL v9+ with ThorVG for SVG-based dashboard rendering.
-- Simulate the dashboard UI on Linux using SDL2 simulator.
-- Test ESP32 firmware in QEMU before hardware deployment.
-- Deploy to actual ESP32 hardware with minimal changes.
-- Integrate OBD-II and CAN bus data (mock data for now).
+- ESP32-S3 firmware (ESP-IDF or PlatformIO)
+- A Linux desktop simulator (SDL + LVGL)
+- A shared C++ rendering and animation engine
+- A preprocessing toolchain for SVG → vector bytecode → gauge assets
+- A future mobile app pipeline (Android/iOS)
+- A binary gauge asset format with JSON bindings
+- A user-customizable gauge system with animations and dynamic data
 
-## Repository Structure
-- `simulator/`       → LVGL PC simulator project (CMake + SDL2)
-- `esp32-qemu/`      → ESP32 firmware with QEMU run helper
-   - `digi-dash-esp32/` → ESP-IDF project with LVGL + ThorVG
-   - `run-qemu-s3.sh`    → QEMU launch helper (SDL display + UART)
-- `assets/`          → SVG dashboard assets, icons, fonts
-- `docs/`            → Architecture notes, wiring diagrams
+All development is done on Linux (Ubuntu or WSL). All build systems must support Linux-first workflows.
 
-## What I want Copilot to help with
-1. Scaffold the LVGL simulator project inside `simulator/` using CMake and SDL2.
-2. Create a clean C++ structure for the UI:
-   - A main screen
-   - RPM gauge
-   - Speed display
-   - Coolant temp gauge (later)
-3. Provide mock data generators for RPM, speed, and temperature.
-4. Keep UI code modular (e.g., separate classes or modules for each gauge).
-5. Prepare for future ESP32 deployment by keeping hardware-specific code isolated.
-6. Use modern C++ conventions and clean architecture.
+---
 
-## Constraints
-- Linux development environment (Ubuntu/Debian).
-- GNOME Terminal.
-- CMake for the simulator.
-- ESP-IDF v5.3.1 for ESP32 firmware.
-- C++17 or newer for simulator, C11 for ESP32.
-- LVGL v9+ with ThorVG for SVG rendering.
-- QEMU (esp-qemu from ESP-IDF tools) for ESP32-S3 simulation.
-- No Python or JavaScript for core logic.
-- Avoid platform-specific hacks; keep code portable.
+## High-Level Goals for Copilot
+Copilot should help generate and maintain:
 
-## Autonomous Setup Instructions
+1. A clean, scalable folder structure
+2. CMake-based build systems for engine + simulator
+3. ESP32 firmware build system (ESP-IDF or PlatformIO)
+4. Shared C++ engine code used by both simulator and firmware
+5. A Linux simulator using SDL + LVGL
+6. Preprocessing tools (Python or C++)
+7. Documentation and templates
+8. Helper scripts for WSL/Linux development
 
-**IMPORTANT: When cloning this repo fresh, Copilot should execute these steps autonomously to set up the complete development environment.**
+Copilot should always prefer:
+- C++
+- CMake
+- Cross-platform abstractions
+- Clean architecture
+- Modular components
+- Reusable code between firmware and simulator
 
-### 1. Install System Dependencies
+---
 
-```bash
-# Update package lists
-sudo apt-get update
+## Required Folder Structure
 
-# Install build tools and dependencies
-sudo apt-get install -y \
-    git wget flex bison gperf python3 python3-pip python3-venv \
-    cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0 \
-    build-essential libsdl2-dev dotnet-runtime-8.0 python3-pip \
-    gtk-sharp2-gapi libglade2.0-cil-dev libglib2.0-cil-dev libgtk2.0-cil-dev
-```
+Create and maintain the following structure:
 
-### 2. Install ESP-IDF v5.3.1
+digi-dash/
+│
+├── engine/                     # Shared C++ rendering + animation engine
+│   ├── include/digidash/
+│   ├── src/
+│   ├── tests/
+│   └── CMakeLists.txt
+│
+├── firmware/                   # ESP32-S3 firmware
+│   ├── src/
+│   ├── include/
+│   ├── components/
+│   ├── CMakeLists.txt          # if ESP-IDF
+│   └── platformio.ini          # if PlatformIO
+│
+├── simulator/                  # Linux desktop simulator (SDL + LVGL)
+│   ├── src/
+│   ├── include/
+│   ├── assets/
+│   ├── CMakeLists.txt
+│   └── run.sh
+│
+├── tools/                      # Preprocessing tools
+│   ├── svg_preprocessor/
+│   ├── font_preprocessor/
+│   ├── gauge_packer/
+│   └── CMakeLists.txt or Python venv
+│
+├── gauges/                     # Example gauges and templates
+│   ├── examples/
+│   ├── templates/
+│   └── README.md
+│
+├── docs/                       # Architecture, specs, diagrams
+│   ├── architecture/
+│   ├── gauge_format/
+│   ├── rendering_pipeline/
+│   └── README.md
+│
+├── scripts/                    # Linux/WSL helper scripts
+│   ├── build_sim.sh
+│   ├── build_fw.sh
+│   ├── flash_fw.sh
+│   └── format_code.sh
+│
+└── CMakeLists.txt              # Top-level CMake for engine + simulator
 
-```bash
-# Clone ESP-IDF
-mkdir -p ~/esp
-cd ~/esp
-git clone --recursive --depth 1 --branch v5.3.1 https://github.com/espressif/esp-idf.git
+---
 
-# Install ESP-IDF tools
-cd esp-idf
-./install.sh esp32
+## Shared Engine Requirements
 
-# Verify installation (will need to source export.sh first)
-. ./export.sh
-idf.py --version
-```
+Copilot should generate a C++ engine with the following components:
 
-### 3. Install esp-qemu (ESP32-S3 QEMU from ESP-IDF tools)
+- VectorRenderer
+- BinaryGaugeLoader
+- AnimationEngine
+- GaugeScene
+- FontManager
+- PIDBindingSystem
 
-```bash
-# From inside ESP-IDF
-cd ~/esp/esp-idf
-. ./export.sh
-python -m idf_tools.py install esp-qemu
-python -m idf_tools.py install-python-env  # ensures deps for esp-qemu wrappers
-```
+All engine code must be platform-agnostic and compile on both:
+- Linux (simulator)
+- ESP32-S3 (firmware)
 
-### 4. Build SDL2 Simulator
+Use abstract interfaces for platform-specific functionality:
+- PlatformDisplay
+- PlatformInput
+- PlatformStorage
+- PlatformBluetooth
 
-```bash
-cd /path/to/digi-dash/simulator
+---
 
-# Create build directory
-mkdir -p build && cd build
+## Simulator Requirements
 
-# Configure and build
-cmake ..
-make -j$(nproc)
+The simulator must:
+- Build with CMake on Linux/WSL
+- Use SDL2 + LVGL
+- Load gauge binary files
+- Simulate animations
+- Provide fake PID data
+- Hot-reload gauge assets if possible
 
-# Test run (will auto-exit after timeout)
-timeout 5 ./digi-dash-simulator
-```
+---
 
-### 5. Build ESP32 Firmware
+## Firmware Requirements
 
-```bash
-cd /path/to/digi-dash/esp32-qemu/digi-dash-esp32
+The firmware must:
+- Build with ESP-IDF or PlatformIO
+- Use LVGL for rendering
+- Receive gauge files via Bluetooth
+- Store gauge files in flash
+- Load and render gauge assets using the shared engine
+- Run animations at 30–60 FPS
 
-# Source ESP-IDF environment
-. ~/esp/esp-idf/export.sh
+---
 
-# Build firmware
-idf.py build
+## Preprocessing Tools Requirements
 
-# The output will be: build/digi-dash-esp32.elf
-```
+Tools should:
+- Parse SVG files
+- Resolve transforms
+- Convert shapes to cubic Bézier paths
+- Convert static text to vector outlines
+- Convert dynamic text to LVGL bitmap fonts
+- Package everything into a binary gauge file
+- Output JSON bindings + vector data
 
-### 6. Run ESP32-S3 firmware in QEMU (GUI)
+Tools must run on Linux/WSL.
 
-```bash
-cd /path/to/digi-dash/esp32-qemu/digi-dash-esp32
-. ~/esp/esp-idf/export.sh
+---
 
-# Build (if not already built)
-idf.py build
+## Coding Style & Conventions
 
-# Launch bundled QEMU with SDL display
-idf.py qemu -- -display sdl -serial stdio
-```
+Copilot should follow:
+- Modern C++ (C++17 or newer)
+- RAII for resource management
+- Namespaces under `digidash`
+- Header files in `engine/include/digidash/`
+- Source files in `engine/src/`
+- Unit tests using GoogleTest or Catch2 (Linux)
+- ESP-IDF Unity tests for firmware components
 
-### 7. Flash to Physical ESP32 Hardware
+---
 
-```bash
-cd /path/to/digi-dash/esp32-qemu/digi-dash-esp32
+## What Copilot Should Automatically Generate
 
-# Source ESP-IDF environment
-. ~/esp/esp-idf/export.sh
+Copilot should:
+- Create missing folders
+- Generate CMakeLists.txt files
+- Scaffold class headers and source files
+- Write platform abstraction layers
+- Implement the Linux simulator entry point
+- Implement ESP32 firmware entry point
+- Generate helper scripts for WSL
+- Create documentation stubs
+- Maintain consistency across modules
 
-# Flash to ESP32 (replace /dev/ttyUSB0 with your port)
-idf.py -p /dev/ttyUSB0 flash monitor
-```
+Copilot should NOT:
+- Mix simulator and firmware code
+- Hardcode platform-specific logic into the engine
+- Generate unused files or folders
 
-## Environment Setup for Each Terminal Session
+---
 
-Every time you open a new terminal to work on ESP32 firmware:
+## Developer Workflow (for Copilot awareness)
 
-```bash
-# Source ESP-IDF environment
-. ~/esp/esp-idf/export.sh
+1. Write or modify engine code in `engine/`
+2. Build and test on Linux using the simulator
+3. Build firmware using ESP-IDF or PlatformIO
+4. Use preprocessing tools to generate gauge assets
+5. Load assets into simulator or ESP32
+6. Iterate quickly using Linux simulator
 
-# Now you can use idf.py commands
-cd /path/to/digi-dash/esp32-qemu/digi-dash-esp32
-idf.py build
-```
+Copilot should optimize for this workflow.
 
-## Quick Test Commands
+---
 
-```bash
-# Test SDL2 simulator
-cd simulator/build && timeout 5 ./digi-dash-simulator
-
-# Test ESP32 build
-cd esp32-qemu/digi-dash-esp32 && . ~/esp/esp-idf/export.sh && idf.py build
-
-# Run in QEMU with GUI
-cd esp32-qemu/digi-dash-esp32 && . ~/esp/esp-idf/export.sh && idf.py qemu -- -display sdl -serial stdio
-```
-
-## What Copilot Should Help With
-
-1. **Autonomous Environment Setup**
-   - When repo is freshly cloned, automatically execute all setup steps
-   - Install dependencies (esp-qemu, ESP-IDF, SDL2, etc.)
-   - Build both simulator and ESP32 firmware
-   - Verify everything is working with test commands
-
-2. **LVGL UI Development**
-   - Create SVG-based dashboard layouts
-   - Implement gauges using ThorVG vector graphics
-   - Keep UI code modular and reusable
-   - Test in SDL2 simulator first, then ESP32
-
-3. **ESP32 Firmware**
-   - Configure LVGL with ThorVG support
-   - Set up display drivers (ILI9341, ST7789, etc.)
-   - Manage SPIFFS for SVG asset storage
-   - Handle OBD-II/CAN data integration
-
-4. **Code Organization**
-   - Maintain clean C++/C structure
-   - Separate platform-specific code
-   - Use modern conventions (C++17 for sim, C11 for ESP32)
-   - Keep code portable between simulator and hardware
-
-5. **Testing & Debugging**
-   - Use `timeout` command for automated simulator testing
-   - Test in QEMU before flashing hardware
-   - Provide clear error messages and logging
-   - Validate SVG rendering on all platforms
-
-## Current Development Status
-
-✅ SDL2 simulator with LVGL v9 + ThorVG support  
-✅ ESP-IDF v5.3.1 installed and configured  
-✅ esp-qemu installed for ESP32-S3 simulation  
-✅ ESP32 project created with LVGL + ThorVG  
-✅ Build system configured (CMake + ESP-IDF)  
-⏳ Display driver configuration (ILI9341/ST7789)  
-⏳ SVG dashboard design and asset pipeline  
-⏳ OBD-II/CAN data integration  
-
-## Key Technical Details
-
-### LVGL Configuration (Both Platforms)
-- LVGL v9.2+
-- Color depth: 16-bit (RGB565) for ESP32, 32-bit for simulator
-- ThorVG enabled for SVG rendering
-- Required flags:
-  - `LV_USE_FLOAT 1`
-  - `LV_USE_MATRIX 1`
-  - `LV_USE_VECTOR_GRAPHIC 1`
-  - `LV_USE_SVG 1`
-  - `LV_USE_THORVG_INTERNAL 1`
-
-### ESP32 Hardware Configuration
-- Target: ESP32 (can be adapted for ESP32-S3, ESP32-C3)
-- Display: ILI9341 or ST7789 via SPI
-- Resolution: 320x240 or 480x320
-- SPIFFS partition for SVG assets
-- PSRAM recommended for larger dashboards
-
-### File System Setup
-- SDL2 Simulator: Needs POSIX file system driver or embedded SVG data
-- ESP32: SPIFFS with 'S:' driver letter for LVGL file access
-  - Example: `lv_image_set_src(img, "S:/spiffs/dashboard.svg")`
-
-## Common Issues & Solutions
-
-### "unknown driver letter" Error
-- **Cause**: LVGL file system not initialized
-- **Solution**: Register POSIX driver for simulator, use SPIFFS with 'S:' for ESP32
-
-### Build Errors with ThorVG
-- **Cause**: Missing LV_USE_FLOAT or LV_USE_MATRIX
-- **Solution**: Enable all required flags in lv_conf.h
-
-### QEMU Display Not Showing
-- **Cause**: Missing `-display sdl` or esp-qemu not installed
-- **Solution**: Ensure `idf.py qemu -- -display sdl -serial stdio` and run `python -m idf_tools.py install esp-qemu`
-
-### ESP-IDF Commands Not Found
-- **Cause**: Environment not sourced
-- **Solution**: Run `. ~/esp/esp-idf/export.sh` in every new terminal
-
-## Starting Tasks for Copilot
-
-When setting up a fresh clone:
-1. Check if dependencies are installed, install if missing
-2. Verify esp-qemu installation (via `idf_tools.py`) and ESP-IDF
-3. Build simulator and test with `timeout 5 ./digi-dash-simulator`
-4. Build ESP32 firmware
-5. Test in QEMU with `idf.py qemu -- -display sdl -serial stdio`
-6. Report status and next steps
-
-Use this context to guide all suggestions and code generation autonomously.
+## End of Instructions

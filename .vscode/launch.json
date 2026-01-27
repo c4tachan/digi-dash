@@ -1,0 +1,62 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "gdbtarget",
+      "request": "attach",
+      "name": "Eclipse CDT GDB Adapter"
+    },
+    {
+      "type": "espidf",
+      "name": "Launch",
+      "request": "launch"
+    },
+    {
+      "name": "Debug Simulator (PNG Decode)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/simulator/build/digi-dash-simulator",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/simulator/build",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set disassembly flavor to Intel",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "Build Simulator",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "sourceLanguages": ["c", "cpp"]
+    },
+    {
+      "name": "Debug Simulator (No Pre-build)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/simulator/build/digi-dash-simulator",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/simulator/build",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "miDebuggerPath": "/usr/bin/gdb"
+    }
+  ]
+}
