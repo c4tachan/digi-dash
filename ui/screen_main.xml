@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<screen name="screen_main">
+  <!-- Main dashboard screen -->
+  <lv_obj width="100%" height="100%">
+    <lv_obj-style_bg_color value="0x000000"/>
+    <lv_obj-style_bg_opa value="255"/>
+    
+    <!-- Center label for testing -->
+    <lv_label align="center">
+      <lv_label-text value="Digi-Dash"/>
+      <lv_label-style_text_color value="0xFFFFFF"/>
+      <lv_label-style_text_font value="montserrat_48"/>
+    </lv_label>
+  </lv_obj>
+</screen>

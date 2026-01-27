@@ -28,7 +28,7 @@
 
 /* Size of the memory available for `lv_malloc()` in bytes (>= 2kB) */
 #define LV_MEM_CUSTOM 0
-#define LV_MEM_SIZE (64U * 1024U)  /* 64 KB */
+#define LV_MEM_SIZE (2U * 1024U * 1024U)  /* 2 MB for ThorVG + LVGL */
 
 /*====================
    HAL SETTINGS

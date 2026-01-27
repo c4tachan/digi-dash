@@ -1,0 +1,12 @@
+<project name="digi-dash">
+	<targets>
+		<!-- ESP32-S3 target with your display specs -->
+		<target name="esp32-s3">
+			<display width="720" height="720" color_depth="16" />
+		</target>
+		<!-- Linux simulator target for development -->
+		<target name="linux-sim">
+			<display width="720" height="720" color_depth="32" />
+		</target>
+	</targets>
+</project>

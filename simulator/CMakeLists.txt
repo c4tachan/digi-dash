@@ -38,12 +38,14 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/lvgl)
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/lvgl
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/lvgl/src/libs/thorvg
     ${SDL2_INCLUDE_DIRS}
 )
 
 # Source files
 set(SOURCES
     src/main.cpp
+    src/tvg_probe.cpp
     src/config.cpp
     src/gauge.cpp
     src/gauge_factory.cpp
@@ -92,4 +94,5 @@ set(CMAKE_BUILD_TYPE Debug)
 enable_testing()
 
 # Add tests subdirectory (out-of-tree, so need explicit build dir)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../tests ${CMAKE_CURRENT_BINARY_DIR}/../tests)
+# Disabled for now - focus on simulator debugging
+# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../tests ${CMAKE_CURRENT_BINARY_DIR}/../tests)
