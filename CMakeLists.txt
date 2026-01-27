@@ -10,7 +10,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # Build engine by default
 add_subdirectory(engine)
 
-# Build SVG preprocessor (uses nanosvg header-only library)
+# Build SVG preprocessor
 add_subdirectory(tools/svg_preprocessor)
 
 # Build simulator on Linux

@@ -1,14 +1,24 @@
 cmake_minimum_required(VERSION 3.16)
 
-# ESP-IDF CMake build system
-include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
+# For ESP-IDF, we need to build the engine as a library within this component
+# This works with idf_component_register
 
-project(digi-dash-firmware)
+# Set up paths
+set(ENGINE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../engine")
+set(ENGINE_INCLUDE "${ENGINE_DIR}/include")
 
-# Add the engine as a static library component
-idf_component_register(SRCS "src/main.cpp"
-                       INCLUDE_DIRS "include"
-                       REQUIRES esp_hw_support esp_system)
+# Compile engine source files
+file(GLOB_RECURSE ENGINE_SOURCES "${ENGINE_DIR}/src/*.cpp")
 
-# Link the shared engine
-target_link_libraries(${COMPONENT_LIB} PUBLIC digidash-engine)
+# Register as ESP-IDF component
+idf_component_register(SRCS "src/main.cpp" ${ENGINE_SOURCES}
+                       INCLUDE_DIRS "include" "${ENGINE_INCLUDE}"
+                       REQUIRES esp_hw_support esp_system freertos)
+
+# Configure engine compilation
+target_compile_features(${COMPONENT_LIB} PRIVATE cxx_std_17)
+target_compile_options(${COMPONENT_LIB} PRIVATE -Wall -Wextra)
+
+# Link ThorVG
+find_package(thorvg REQUIRED CONFIG)
+target_link_libraries(${COMPONENT_LIB} PUBLIC thorvg::thorvg)
