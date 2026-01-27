@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
+# Source the IDF tools
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
-project(digi-dash-firmware)
+project(digi-dash)
