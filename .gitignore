@@ -1,0 +1,80 @@
+# Build directories
+build/
+cmake_build/
+dist/
+*.o
+*.a
+*.so
+*.so.*
+*.dylib
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
+cmake_install.cmake
+Makefile
+
+# Meson build
+meson_build/
+build_dir/
+subprojects/packagefiles/
+.mesonpy
+meson-logs/
+meson-private/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-workspace
+*.sublime-project
+
+# Generated files
+*.pb.h
+*.pb.cc
+*.gen.*
+*.generated.*
+
+# Test artifacts
+test_find_thorvg*
+test_results/
+*.test
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.Python
+
+# ThorVG local clone (we have it elsewhere)
+thorvg/
+
+# Executables
+digi-dash-simulator
+*.exe
+*.out
+
+# Build outputs
+*.gauge
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+
+# OS specific
+Thumbs.db
+.AppleDouble
+.LSOverride
