@@ -5,6 +5,7 @@
 #include "esp_log.h"
 #include "esp_vfs.h"
 #include "esp_spiffs.h"
+#include "esp_heap_caps.h"
 
 #include "digidash/gauge_scene.h"
 #include "digidash/binary_gauge_loader.h"
@@ -54,8 +55,18 @@ extern "C" void app_main(void) {
     // Initialize SPIFFS
     init_spiffs();
     
-    // Allocate framebuffer
-    framebuffer = (uint8_t*)malloc(DISPLAY_HEIGHT * DISPLAY_STRIDE);
+    // Allocate framebuffer from PSRAM if available, otherwise regular heap
+    size_t framebuffer_size = DISPLAY_HEIGHT * DISPLAY_STRIDE;
+    ESP_LOGI(TAG, "Allocating framebuffer: %zu bytes (%.2f MB)", 
+             framebuffer_size, framebuffer_size / (1024.0 * 1024.0));
+    
+    framebuffer = (uint8_t*)heap_caps_malloc(framebuffer_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!framebuffer) {
+        // Fallback to regular heap if PSRAM not available
+        ESP_LOGW(TAG, "PSRAM allocation failed, trying regular heap");
+        framebuffer = (uint8_t*)malloc(framebuffer_size);
+    }
+    
     if (!framebuffer) {
         ESP_LOGE(TAG, "Failed to allocate framebuffer");
         return;
