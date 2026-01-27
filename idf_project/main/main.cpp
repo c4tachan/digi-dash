@@ -17,7 +17,11 @@ static const int DISPLAY_WIDTH = 720;
 static const int DISPLAY_HEIGHT = 720;
 static const int DISPLAY_STRIDE = DISPLAY_WIDTH * 4;
 
-// Framebuffer for rendering
+// Draw buffer dimensions (smaller buffer for tile-based rendering)
+static const int BUFFER_HEIGHT = 60;  // Render in 60-line chunks
+static const int BUFFER_SIZE = DISPLAY_WIDTH * BUFFER_HEIGHT * 4;  // ~169KB
+
+// Draw buffer for rendering
 static uint8_t* framebuffer = nullptr;
 
 // Initialize SPIFFS for gauge file storage
@@ -55,17 +59,11 @@ extern "C" void app_main(void) {
     // Initialize SPIFFS
     init_spiffs();
     
-    // Allocate framebuffer from PSRAM if available, otherwise regular heap
-    size_t framebuffer_size = DISPLAY_HEIGHT * DISPLAY_STRIDE;
-    ESP_LOGI(TAG, "Allocating framebuffer: %zu bytes (%.2f MB)", 
-             framebuffer_size, framebuffer_size / (1024.0 * 1024.0));
+    // Allocate draw buffer (much smaller than full framebuffer)
+    ESP_LOGI(TAG, "Allocating draw buffer: %d bytes (%.2f KB) for %dx%d tiles", 
+             BUFFER_SIZE, BUFFER_SIZE / 1024.0, DISPLAY_WIDTH, BUFFER_HEIGHT);
     
-    framebuffer = (uint8_t*)heap_caps_malloc(framebuffer_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    if (!framebuffer) {
-        // Fallback to regular heap if PSRAM not available
-        ESP_LOGW(TAG, "PSRAM allocation failed, trying regular heap");
-        framebuffer = (uint8_t*)malloc(framebuffer_size);
-    }
+    framebuffer = (uint8_t*)malloc(BUFFER_SIZE);
     
     if (!framebuffer) {
         ESP_LOGE(TAG, "Failed to allocate framebuffer");
@@ -121,21 +119,34 @@ extern "C" void app_main(void) {
         // Load the gauge into the scene
         gauge_scene.load_gauge(asset);
         
-        // Render loop
+        // Render loop with tile-based rendering
         int frame_count = 0;
+        const int num_tiles = (DISPLAY_HEIGHT + BUFFER_HEIGHT - 1) / BUFFER_HEIGHT;
+        
+        ESP_LOGI(TAG, "Starting render loop: %d tiles of %d lines each", num_tiles, BUFFER_HEIGHT);
+        
         while (1) {
-            // Clear framebuffer
-            std::memset(framebuffer, 0, DISPLAY_HEIGHT * DISPLAY_STRIDE);
-            
-            // Render gauge to framebuffer
-            gauge_scene.render(framebuffer, DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_STRIDE);
+            // Render each tile
+            for (int tile = 0; tile < num_tiles; tile++) {
+                int y_start = tile * BUFFER_HEIGHT;
+                int y_end = (tile + 1) * BUFFER_HEIGHT;
+                if (y_end > DISPLAY_HEIGHT) y_end = DISPLAY_HEIGHT;
+                int tile_height = y_end - y_start;
+                
+                // Clear draw buffer
+                std::memset(framebuffer, 0, DISPLAY_WIDTH * tile_height * 4);
+                
+                // Render this tile of the gauge
+                // TODO: Need to pass y_offset to render only this section
+                gauge_scene.render(framebuffer, DISPLAY_WIDTH, tile_height, DISPLAY_STRIDE);
+                
+                // TODO: Send this tile to display at position (0, y_start)
+            }
             
             // Log periodically
             if (++frame_count % 30 == 0) {
                 ESP_LOGI(TAG, "Rendering... frame %d", frame_count);
             }
-            
-            // TODO: Send framebuffer to display (LVGL, SPI, etc.)
             
             vTaskDelay(33 / portTICK_PERIOD_MS);  // ~30 FPS
         }
