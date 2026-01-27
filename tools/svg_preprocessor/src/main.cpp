@@ -1,5 +1,5 @@
 #include <iostream>
-#include "digidash/svg_preprocessor.hpp"
+#include "svg_preprocessor.hpp"
 
 int main(int argc, char** argv) {
     if (argc < 3) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "types.h"
 #include <vector>
 #include <memory>
 #include <cstdint>
@@ -24,6 +25,7 @@ public:
         uint32_t color;
         float stroke_width;
         bool is_filled;
+        StrokeLineCap stroke_cap;
     };
 
     VectorRenderer();
@@ -61,7 +63,14 @@ private:
      */
     void draw_stroked_path(const std::vector<Point>& points, uint8_t* buffer,
                           int width, int height, int stride, uint8_t r, uint8_t g,
-                          uint8_t b, uint8_t a, float stroke_width);
+                          uint8_t b, uint8_t a, float stroke_width, StrokeLineCap cap);
+    
+    /**
+     * @brief Draw a round cap at a point
+     */
+    void draw_round_cap(float x, float y, uint8_t* buffer, int width, int height,
+                       int stride, uint8_t r, uint8_t g, uint8_t b, uint8_t a,
+                       float radius);
     
     /**
      * @brief Draw a single line with thickness

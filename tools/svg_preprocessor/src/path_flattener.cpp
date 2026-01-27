@@ -3,10 +3,16 @@
 namespace digidash {
 
 void PathFlattener::flatten(GaugeDocument& doc) {
-    // TODO:
-    // - Find any arc commands (if you model them)
-    // - Convert them into cubic Bézier PathCommands
-    // - Optionally subdivide curves into smaller segments
+    // ThorVG already flattens all SVG primitives to the four basic path commands:
+    // - MoveTo
+    // - LineTo  
+    // - CubicTo (cubic Bézier curves)
+    // - Close
+    //
+    // SVG arcs, circles, ellipses, and other complex shapes are already converted
+    // to cubic Bézier approximations by ThorVG's SVG loader.
+    //
+    // This step is essentially a no-op for ThorVG-loaded data
     (void)doc;
 }
 

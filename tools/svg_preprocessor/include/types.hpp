@@ -10,9 +10,16 @@ struct Color {
     uint8_t r{0}, g{0}, b{0}, a{255};
 };
 
+enum class StrokeLineCap : uint8_t {
+    Butt = 0,
+    Round = 1,
+    Square = 2
+};
+
 struct StrokeStyle {
     float width{1.0f};
     Color color{255, 255, 255, 255};
+    StrokeLineCap cap{StrokeLineCap::Butt};
 };
 
 struct FillStyle {
@@ -37,6 +44,8 @@ struct Path {
 };
 
 struct GaugeDocument {
+    float width{0.0f};
+    float height{0.0f};
     std::vector<Path> paths;
 };
 

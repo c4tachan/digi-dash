@@ -1,5 +1,6 @@
 #include "digidash/gauge_scene.h"
 #include <cstring>
+#include <algorithm>
 
 namespace digidash {
 
@@ -17,66 +18,94 @@ bool GaugeScene::load_gauge(const BinaryGaugeLoader::GaugeAsset& asset) {
     width_ = asset.width;
     height_ = asset.height;
     
-    // Parse path data from asset
-    size_t offset = 0;
+    // Convert Path structure to BezierPath for rendering
     paths_.clear();
     
-    while (offset < asset.path_data.size()) {
-        if (offset + 10 > asset.path_data.size()) break;
+    for (const auto& path : asset.paths) {
+        VectorRenderer::BezierPath bezier_path;
         
-        // Read path header
-        uint16_t point_count = (asset.path_data[offset] |
-                                (asset.path_data[offset + 1] << 8));
-        offset += 2;
+        // Convert color from Color struct to uint32
+        uint32_t color = (path.stroke.color.a << 24) |
+                        (path.stroke.color.r << 16) |
+                        (path.stroke.color.g << 8) |
+                        path.stroke.color.b;
         
-        uint32_t color = (asset.path_data[offset] |
-                         (asset.path_data[offset + 1] << 8) |
-                         (asset.path_data[offset + 2] << 16) |
-                         (asset.path_data[offset + 3] << 24));
-        offset += 4;
+        bezier_path.color = color;
+        bezier_path.stroke_width = path.stroke.width;
+        bezier_path.is_filled = path.fill.enabled;
+        bezier_path.stroke_cap = path.stroke.cap;
         
-        uint32_t stroke_width_bits = (asset.path_data[offset] |
-                                     (asset.path_data[offset + 1] << 8) |
-                                     (asset.path_data[offset + 2] << 16) |
-                                     (asset.path_data[offset + 3] << 24));
-        float stroke_width;
-        std::memcpy(&stroke_width, &stroke_width_bits, sizeof(float));
-        offset += 4;
-        
-        uint8_t is_filled = asset.path_data[offset];
-        offset += 1;
-        offset += 3;  // Skip padding
-        
-        // Read points
-        VectorRenderer::BezierPath path;
-        path.color = color;
-        path.stroke_width = stroke_width;
-        path.is_filled = is_filled != 0;
-        
-        for (int i = 0; i < point_count; ++i) {
-            if (offset + 8 > asset.path_data.size()) break;
-            
-            uint32_t x_bits = (asset.path_data[offset] |
-                              (asset.path_data[offset + 1] << 8) |
-                              (asset.path_data[offset + 2] << 16) |
-                              (asset.path_data[offset + 3] << 24));
-            float x;
-            std::memcpy(&x, &x_bits, sizeof(float));
-            offset += 4;
-            
-            uint32_t y_bits = (asset.path_data[offset] |
-                              (asset.path_data[offset + 1] << 8) |
-                              (asset.path_data[offset + 2] << 16) |
-                              (asset.path_data[offset + 3] << 24));
-            float y;
-            std::memcpy(&y, &y_bits, sizeof(float));
-            offset += 4;
-            
-            path.control_points.push_back({x, y});
+        // If filled, use fill color instead
+        if (path.fill.enabled) {
+            bezier_path.color = (path.fill.color.a << 24) |
+                               (path.fill.color.r << 16) |
+                               (path.fill.color.g << 8) |
+                               path.fill.color.b;
         }
         
-        if (!path.control_points.empty()) {
-            paths_.push_back(path);
+        // Flatten PathCommands to points for rendering
+        float current_x = 0.0f, current_y = 0.0f;
+        
+        for (const auto& cmd : path.commands) {
+            switch (cmd.type) {
+                case PathCommand::Type::MoveTo: {
+                    current_x = cmd.x1;
+                    current_y = cmd.y1;
+                    bezier_path.control_points.push_back({current_x, current_y});
+                }
+                break;
+                    
+                case PathCommand::Type::LineTo: {
+                    current_x = cmd.x1;
+                    current_y = cmd.y1;
+                    bezier_path.control_points.push_back({current_x, current_y});
+                }
+                break;
+                    
+                case PathCommand::Type::CubicTo:
+                    // Tessellate cubic bezier into line segments
+                    {
+                        const int segments = 50;  // Increased from 10 for better arc accuracy
+                        float start_x = current_x;
+                        float start_y = current_y;
+                        
+                        for (int i = 1; i <= segments; ++i) {
+                            float t = i / (float)segments;
+                            float t2 = t * t;
+                            float t3 = t2 * t;
+                            float mt = 1.0f - t;
+                            float mt2 = mt * mt;
+                            float mt3 = mt2 * mt;
+                            
+                            float x = mt3 * start_x + 
+                                     3.0f * mt2 * t * cmd.x1 +
+                                     3.0f * mt * t2 * cmd.x2 +
+                                     t3 * cmd.x3;
+                            float y = mt3 * start_y +
+                                     3.0f * mt2 * t * cmd.y1 +
+                                     3.0f * mt * t2 * cmd.y2 +
+                                     t3 * cmd.y3;
+                            
+                            bezier_path.control_points.push_back({x, y});
+                        }
+                        
+                        current_x = cmd.x3;
+                        current_y = cmd.y3;
+                    }
+                    break;
+                    
+                case PathCommand::Type::Close:
+                    // Close path by adding first point again if needed
+                    if (!bezier_path.control_points.empty()) {
+                        const auto& first = bezier_path.control_points[0];
+                        bezier_path.control_points.push_back(first);
+                    }
+                    break;
+            }
+        }
+        
+        if (!bezier_path.control_points.empty()) {
+            paths_.push_back(bezier_path);
         }
     }
     

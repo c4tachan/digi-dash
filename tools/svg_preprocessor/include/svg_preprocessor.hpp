@@ -19,6 +19,10 @@ public:
 
 private:
     // ThorVG shape extraction helpers
+    void _extract_thorvg_shape(tvg::Shape* shape, GaugeDocument& doc);
+    
+    // Deprecated NanoSVG helpers (kept for reference only)
+    void _extract_nanosvg_shape(void* shape, GaugeDocument& doc);
     void _extract_shapes(tvg::Paint* paint, GaugeDocument& doc);
     void _extract_path_from_shape(tvg::Shape* shape, GaugeDocument& doc);
     void _extract_path_commands(tvg::Shape* shape, Path& path);

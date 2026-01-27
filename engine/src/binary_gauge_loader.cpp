@@ -28,116 +28,102 @@ bool BinaryGaugeLoader::load_from_file(const std::string& filepath,
 bool BinaryGaugeLoader::load_from_buffer(const uint8_t* buffer,
                                         size_t buffer_size,
                                         GaugeAsset& asset_out) {
-    if (!buffer || buffer_size < 128) {
+    if (!buffer || buffer_size < 8) {
         return false;
     }
     
-    uint32_t width, height;
-    if (!parse_header(buffer, buffer_size, width, height)) {
+    size_t offset = 0;
+    
+    // Parse header: magic + version + path_count
+    uint32_t magic;
+    std::memcpy(&magic, buffer + offset, sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+    
+    if (magic != 0x45474744) {  // "DGGE"
         return false;
     }
     
-    asset_out.width = width;
-    asset_out.height = height;
+    uint16_t version;
+    std::memcpy(&version, buffer + offset, sizeof(uint16_t));
+    offset += sizeof(uint16_t);
     
-    // Parse path data
-    size_t offset = 128;
-    while (offset < buffer_size) {
-        if (offset + 12 > buffer_size) break;  // Not enough for path header
+    if (version != 1) {
+        return false;
+    }
+    
+    uint16_t path_count;
+    std::memcpy(&path_count, buffer + offset, sizeof(uint16_t));
+    offset += sizeof(uint16_t);
+    
+    // Set default dimensions (will be overridden if format includes them)
+    asset_out.width = 800;
+    asset_out.height = 600;
+    
+    // Parse each path
+    for (uint16_t i = 0; i < path_count; ++i) {
+        if (offset >= buffer_size) break;
         
-        uint16_t point_count;
-        std::memcpy(&point_count, buffer + offset, sizeof(uint16_t));
-        offset += sizeof(uint16_t);
+        Path path;
         
-        uint32_t color;
-        std::memcpy(&color, buffer + offset, sizeof(uint32_t));
-        offset += sizeof(uint32_t);
-        
-        float stroke_width;
-        std::memcpy(&stroke_width, buffer + offset, sizeof(float));
-        offset += sizeof(float);
-        
-        uint8_t is_filled;
-        std::memcpy(&is_filled, buffer + offset, sizeof(uint8_t));
+        // Read path ID
+        uint8_t id_len;
+        std::memcpy(&id_len, buffer + offset, sizeof(uint8_t));
         offset += sizeof(uint8_t);
         
-        offset += 3;  // Skip padding
+        if (offset + id_len > buffer_size) break;
+        path.id.assign(reinterpret_cast<const char*>(buffer + offset), id_len);
+        offset += id_len;
         
-        // Check if we have enough data for all points
-        if (offset + (point_count * sizeof(float) * 2) > buffer_size) {
-            break;
+        // Read stroke style
+        if (offset + 9 > buffer_size) break;
+        std::memcpy(&path.stroke.width, buffer + offset, sizeof(float));
+        offset += sizeof(float);
+        
+        path.stroke.color.r = buffer[offset++];
+        path.stroke.color.g = buffer[offset++];
+        path.stroke.color.b = buffer[offset++];
+        path.stroke.color.a = buffer[offset++];
+        path.stroke.cap = static_cast<StrokeLineCap>(buffer[offset++]);
+        
+        // Read fill style
+        if (offset + 5 > buffer_size) break;
+        path.fill.enabled = buffer[offset++] != 0;
+        path.fill.color.r = buffer[offset++];
+        path.fill.color.g = buffer[offset++];
+        path.fill.color.b = buffer[offset++];
+        path.fill.color.a = buffer[offset++];
+        
+        // Read command count
+        if (offset + 2 > buffer_size) break;
+        uint16_t cmd_count;
+        std::memcpy(&cmd_count, buffer + offset, sizeof(uint16_t));
+        offset += sizeof(uint16_t);
+        
+        // Read commands
+        for (uint16_t c = 0; c < cmd_count; ++c) {
+            if (offset + 25 > buffer_size) break;  // 1 + 6*4 bytes
+            
+            PathCommand cmd;
+            cmd.type = static_cast<PathCommand::Type>(buffer[offset++]);
+            
+            std::memcpy(&cmd.x1, buffer + offset, sizeof(float)); offset += sizeof(float);
+            std::memcpy(&cmd.y1, buffer + offset, sizeof(float)); offset += sizeof(float);
+            std::memcpy(&cmd.x2, buffer + offset, sizeof(float)); offset += sizeof(float);
+            std::memcpy(&cmd.y2, buffer + offset, sizeof(float)); offset += sizeof(float);
+            std::memcpy(&cmd.x3, buffer + offset, sizeof(float)); offset += sizeof(float);
+            std::memcpy(&cmd.y3, buffer + offset, sizeof(float)); offset += sizeof(float);
+            
+            path.commands.push_back(cmd);
         }
         
-        // Store path data
-        asset_out.path_data.push_back(point_count);
-        asset_out.path_data.push_back((color >> 0) & 0xFF);
-        asset_out.path_data.push_back((color >> 8) & 0xFF);
-        asset_out.path_data.push_back((color >> 16) & 0xFF);
-        asset_out.path_data.push_back((color >> 24) & 0xFF);
-        
-        uint32_t stroke_width_bits;
-        std::memcpy(&stroke_width_bits, &stroke_width, sizeof(float));
-        asset_out.path_data.push_back((stroke_width_bits >> 0) & 0xFF);
-        asset_out.path_data.push_back((stroke_width_bits >> 8) & 0xFF);
-        asset_out.path_data.push_back((stroke_width_bits >> 16) & 0xFF);
-        asset_out.path_data.push_back((stroke_width_bits >> 24) & 0xFF);
-        
-        asset_out.path_data.push_back(is_filled);
-        
-        // Store point data
-        for (int i = 0; i < point_count; ++i) {
-            float x, y;
-            std::memcpy(&x, buffer + offset, sizeof(float));
-            offset += sizeof(float);
-            std::memcpy(&y, buffer + offset, sizeof(float));
-            offset += sizeof(float);
-            
-            uint32_t x_bits, y_bits;
-            std::memcpy(&x_bits, &x, sizeof(float));
-            std::memcpy(&y_bits, &y, sizeof(float));
-            
-            asset_out.path_data.push_back((x_bits >> 0) & 0xFF);
-            asset_out.path_data.push_back((x_bits >> 8) & 0xFF);
-            asset_out.path_data.push_back((x_bits >> 16) & 0xFF);
-            asset_out.path_data.push_back((x_bits >> 24) & 0xFF);
-            asset_out.path_data.push_back((y_bits >> 0) & 0xFF);
-            asset_out.path_data.push_back((y_bits >> 8) & 0xFF);
-            asset_out.path_data.push_back((y_bits >> 16) & 0xFF);
-            asset_out.path_data.push_back((y_bits >> 24) & 0xFF);
-        }
+        asset_out.paths.push_back(path);
     }
     
     return validate_asset(asset_out);
 }
 
 bool BinaryGaugeLoader::validate_asset(const GaugeAsset& asset) {
-    return asset.width > 0 && asset.height > 0 && !asset.path_data.empty();
-}
-
-bool BinaryGaugeLoader::parse_header(const uint8_t* buffer, size_t buffer_size,
-                                     uint32_t& width_out,
-                                     uint32_t& height_out) {
-    if (buffer_size < 128) {
-        return false;
-    }
-    
-    uint32_t magic;
-    std::memcpy(&magic, buffer, sizeof(uint32_t));
-    
-    if (magic != 0x44474147) {  // "DGAG"
-        return false;
-    }
-    
-    uint32_t version;
-    std::memcpy(&version, buffer + 4, sizeof(uint32_t));
-    if (version != 1) {
-        return false;
-    }
-    
-    std::memcpy(&width_out, buffer + 8, sizeof(uint32_t));
-    std::memcpy(&height_out, buffer + 12, sizeof(uint32_t));
-    
-    return true;
+    return asset.width > 0 && asset.height > 0 && !asset.paths.empty();
 }
 
 } // namespace digidash

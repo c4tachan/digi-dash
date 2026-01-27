@@ -1,4 +1,4 @@
-#include "digidash/svg_preprocessor.hpp"
+#include "svg_preprocessor.hpp"
 #include <fstream>
 #include <stdexcept>
 
@@ -33,6 +33,7 @@ void GaugeSerializer::write_binary(const GaugeDocument& doc, const std::string& 
         write_u8(os, path.stroke.color.g);
         write_u8(os, path.stroke.color.b);
         write_u8(os, path.stroke.color.a);
+        write_u8(os, static_cast<uint8_t>(path.stroke.cap));
 
         write_u8(os, path.fill.enabled ? 1 : 0);
         write_u8(os, path.fill.color.r);

@@ -2,6 +2,7 @@
 #include <cstring>
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 
 namespace digidash {
 
@@ -29,7 +30,7 @@ void VectorRenderer::render_path(const BezierPath& path, uint8_t* target_buffer,
     } else {
         // Draw stroked path - polyline
         draw_stroked_path(path.control_points, target_buffer, width, height,
-                         stride, r, g, b, a, path.stroke_width);
+                         stride, r, g, b, a, path.stroke_width, path.stroke_cap);
     }
 }
 
@@ -94,9 +95,9 @@ void VectorRenderer::draw_filled_path(const std::vector<Point>& points,
             for (int x = x1; x < x2; ++x) {
                 int pixel_offset = y * stride + x * 4;
                 if (pixel_offset + 3 < stride * height) {
-                    buffer[pixel_offset + 0] = b;
+                    buffer[pixel_offset + 0] = r;
                     buffer[pixel_offset + 1] = g;
-                    buffer[pixel_offset + 2] = r;
+                    buffer[pixel_offset + 2] = b;
                     buffer[pixel_offset + 3] = a;
                 }
             }
@@ -108,11 +109,32 @@ void VectorRenderer::draw_stroked_path(const std::vector<Point>& points,
                                        uint8_t* buffer, int width, int height,
                                        int stride, uint8_t r, uint8_t g,
                                        uint8_t b, uint8_t a,
-                                       float stroke_width) {
+                                       float stroke_width, StrokeLineCap cap) {
+    if (points.empty()) return;
+    
     // Draw line segments between consecutive points
     for (size_t i = 0; i + 1 < points.size(); ++i) {
         draw_line(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y,
                  buffer, width, height, stride, r, g, b, a, stroke_width);
+    }
+    
+    // Draw caps at endpoints if round
+    if (cap == StrokeLineCap::Round && points.size() >= 2) {
+        // Round cap radius equals half the stroke width (standard SVG behavior)
+        float radius = stroke_width / 2.0f;
+        
+        // Start cap at first point - render in stroke color
+        draw_round_cap(points[0].x, points[0].y, buffer, width, height,
+                      stride, r, g, b, a, radius);
+        
+        // End cap at last point - render in stroke color
+        draw_round_cap(points.back().x, points.back().y, buffer, width, height,
+                      stride, r, g, b, a, radius);
+    } else if (cap == StrokeLineCap::Round && points.size() == 1) {
+        // Single point: just draw a circle at that location
+        float radius = stroke_width / 2.0f;
+        draw_round_cap(points[0].x, points[0].y, buffer, width, height,
+                      stride, 0, 255, 0, 255, radius);
     }
 }
 
@@ -120,44 +142,131 @@ void VectorRenderer::draw_line(float x0, float y0, float x1, float y1,
                                 uint8_t* buffer, int width, int height,
                                 int stride, uint8_t r, uint8_t g, uint8_t b,
                                 uint8_t a, float stroke_width) {
-    // Bresenham's line algorithm with thickness
-    int x0i = (int)x0, y0i = (int)y0;
-    int x1i = (int)x1, y1i = (int)y1;
-    int stroke = (int)stroke_width;
+    // Draw line with circular stroke (not square)
+    float dx = x1 - x0;
+    float dy = y1 - y0;
+    float len = std::sqrt(dx * dx + dy * dy);
     
-    int dx = abs(x1i - x0i);
-    int dy = abs(y1i - y0i);
-    int sx = (x0i < x1i) ? 1 : -1;
-    int sy = (y0i < y1i) ? 1 : -1;
-    int err = dx - dy;
-    
-    while (true) {
-        // Draw pixel with thickness
-        for (int sy_off = -stroke/2; sy_off <= stroke/2; ++sy_off) {
-            for (int sx_off = -stroke/2; sx_off <= stroke/2; ++sx_off) {
-                int px = x0i + sx_off;
-                int py = y0i + sy_off;
+    if (len < 0.001f) {
+        // Very short or zero-length line, just draw a circle
+        float radius = stroke_width / 2.0f;
+        int rad_int = (int)(radius + 1.0f);
+        for (int cy = -rad_int; cy <= rad_int; ++cy) {
+            int py = (int)y0 + cy;
+            if (py < 0 || py >= height) continue;
+            
+            for (int cx = -rad_int; cx <= rad_int; ++cx) {
+                int px = (int)x0 + cx;
+                if (px < 0 || px >= width) continue;
                 
-                if (px >= 0 && px < width && py >= 0 && py < height) {
+                float dist = std::sqrt(cx * cx + cy * cy);
+                if (dist <= radius) {
                     int offset = py * stride + px * 4;
-                    buffer[offset + 0] = b;
+                    buffer[offset + 0] = r;
                     buffer[offset + 1] = g;
-                    buffer[offset + 2] = r;
+                    buffer[offset + 2] = b;
                     buffer[offset + 3] = a;
                 }
             }
         }
+        return;
+    }
+    
+    // Normalize direction
+    float nx = dx / len;
+    float ny = dy / len;
+    
+    // Perpendicular direction for stroke width
+    float px_dir = -ny;
+    float py_dir = nx;
+    
+    float radius = stroke_width / 2.0f;
+    
+    // Draw segments along the line
+    float segments = len + 1.0f;
+    for (int i = 0; i <= (int)segments; ++i) {
+        float t = (segments > 0) ? i / segments : 0;
+        float cx = x0 + t * dx;
+        float cy = y0 + t * dy;
         
-        if (x0i == x1i && y0i == y1i) break;
-        
-        int e2 = 2 * err;
-        if (e2 > -dy) {
-            err -= dy;
-            x0i += sx;
+        // Draw circle at this point
+        int rad_int = (int)(radius + 1.5f);
+        for (int dy_pix = -rad_int; dy_pix <= rad_int; ++dy_pix) {
+            int py = (int)cy + dy_pix;
+            if (py < 0 || py >= height) continue;
+            
+            for (int dx_pix = -rad_int; dx_pix <= rad_int; ++dx_pix) {
+                int px = (int)cx + dx_pix;
+                if (px < 0 || px >= width) continue;
+                
+                float dist = std::sqrt(dx_pix * dx_pix + dy_pix * dy_pix);
+                if (dist <= radius) {
+                    int offset = py * stride + px * 4;
+                    buffer[offset + 0] = r;
+                    buffer[offset + 1] = g;
+                    buffer[offset + 2] = b;
+                    buffer[offset + 3] = a;
+                }
+            }
         }
-        if (e2 < dx) {
-            err += dx;
-            y0i += sy;
+    }
+}
+
+void VectorRenderer::draw_round_cap(float x, float y, uint8_t* buffer,
+                                    int width, int height, int stride,
+                                    uint8_t r, uint8_t g, uint8_t b, uint8_t a,
+                                    float radius) {
+    // Draw a filled circle at the endpoint with anti-aliasing
+    float cx = x;
+    float cy = y;
+    float rad = radius;
+    int rad_int = (int)(rad + 2.0f);
+    
+    if (rad_int <= 0) return;
+    
+    // Draw filled circle scanline by scanline with anti-aliasing
+    for (int dy = -rad_int; dy <= rad_int; ++dy) {
+        int py = cy + dy;
+        if (py < 0 || py >= height) continue;
+        
+        float y_dist = std::abs((float)dy);
+        if (y_dist > rad + 1.0f) continue;
+        
+        // Calculate the width of the circle at this y position
+        float dx_max_sq = rad * rad - y_dist * y_dist;
+        if (dx_max_sq < 0) continue;
+        
+        float dx_max = std::sqrt(dx_max_sq) + 1.0f;
+        int dx_max_int = (int)(dx_max + 1.0f);
+        
+        for (int dx = -(int)dx_max_int; dx <= (int)dx_max_int; ++dx) {
+            int px = cx + dx;
+            if (px < 0 || px >= width) continue;
+            
+            // Calculate distance from center
+            float dist_sq = dx * dx + dy * dy;
+            float dist = std::sqrt(dist_sq);
+            
+            // Use distance-based blending for smooth edges
+            if (dist <= rad) {
+                int offset = py * stride + px * 4;
+                if (offset + 3 < stride * height) {
+                    buffer[offset + 0] = r;
+                    buffer[offset + 1] = g;
+                    buffer[offset + 2] = b;
+                    buffer[offset + 3] = a;
+                }
+            } else if (dist <= rad + 1.5f) {
+                // Anti-aliased edge pixels
+                float blend = 1.0f - (dist - rad) / 1.5f;
+                int offset = py * stride + px * 4;
+                if (offset + 3 < stride * height) {
+                    buffer[offset + 0] = (uint8_t)(buffer[offset + 0] * (1.0f - blend) + r * blend);
+                    buffer[offset + 1] = (uint8_t)(buffer[offset + 1] * (1.0f - blend) + g * blend);
+                    buffer[offset + 2] = (uint8_t)(buffer[offset + 2] * (1.0f - blend) + b * blend);
+                    buffer[offset + 3] = a;
+                }
+            }
         }
     }
 }

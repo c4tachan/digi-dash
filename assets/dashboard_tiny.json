@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "display": {
+    "width": 480,
+    "height": 480,
+    "background": "#000000"
+  },
+
+  "elements": [
+    {
+      "id": "rpm-path",
+      "type": "path",
+      "animation": {
+        "type": "trim",
+        "mode": "sweep",
+        "start_angle": 135,
+        "end_angle": 405,
+        "min_value": 0,
+        "max_value": 8000,
+        "binding": {
+          "source": "pid",
+          "pid": "engine_rpm"
+        }
+      },
+      "style": {
+        "stroke_color": "#FF0000",
+        "stroke_width": 8,
+        "fill": "none"
+      }
+    },
+
+    {
+      "id": "temp-path",
+      "type": "path",
+      "animation": {
+        "type": "trim",
+        "mode": "sweep",
+        "start_angle": 225,
+        "end_angle": 315,
+        "min_value": 160,
+        "max_value": 260,
+        "binding": {
+          "source": "pid",
+          "pid": "coolant_temp"
+        }
+      },
+      "style": {
+        "stroke_color": "#00A0FF",
+        "stroke_width": 8,
+        "fill": "none"
+      }
+    }
+  ]
+}

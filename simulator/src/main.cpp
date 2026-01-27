@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     }
     
     // Initialize display
-    auto display = std::make_unique<SDLDisplay>(480, 320);
+    auto display = std::make_unique<SDLDisplay>(720, 720);
     if (!display->init()) {
         std::cerr << "Failed to initialize SDL display\n";
         return 1;
@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
     const uint32_t target_fps = 30;
     const uint32_t frame_time_ms = 1000 / target_fps;
 
-    std::cout << "Digi-Dash Simulator started (480x320, 30 FPS)\n";
+    std::cout << "Digi-Dash Simulator started (720x720, 30 FPS)\n";
     std::cout << "Rendering gauge from: " << gauge_file << "\n";
     std::cout << "Press Q or close window to exit\n";
 

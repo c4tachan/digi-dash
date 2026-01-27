@@ -3,11 +3,13 @@
 namespace digidash {
 
 void SvgNormalizer::normalize(GaugeDocument& doc) {
-    // TODO:
-    // - Resolve transforms (apply to coordinates)
-    // - Convert circle/ellipse/rect/line into Path with PathCommands
-    // - Normalize stroke/fill styles
-    // For now, this is a no-op.
+    // ThorVG already normalizes SVG elements during parsing:
+    // - Circles, ellipses, rects are converted to path commands
+    // - Arcs are converted to cubic Bézier curves
+    // - Transforms are applied to coordinates
+    // - Styles are resolved
+    // 
+    // This step is essentially a no-op for ThorVG-loaded data
     (void)doc;
 }
 

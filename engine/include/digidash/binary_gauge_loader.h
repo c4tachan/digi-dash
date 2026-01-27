@@ -1,11 +1,39 @@
 #pragma once
 
+#include "types.h"
 #include <vector>
 #include <string>
 #include <memory>
 #include <cstdint>
 
 namespace digidash {
+
+// Path command types matching the preprocessor
+struct PathCommand {
+    enum class Type : uint8_t { MoveTo = 0, LineTo = 1, CubicTo = 2, Close = 3 };
+    Type type;
+    float x1, y1;
+    float x2, y2;
+    float x3, y3;
+};
+
+struct StrokeStyle {
+    float width;
+    Color color;
+    StrokeLineCap cap;
+};
+
+struct FillStyle {
+    bool enabled;
+    Color color;
+};
+
+struct Path {
+    std::string id;
+    StrokeStyle stroke;
+    FillStyle fill;
+    std::vector<PathCommand> commands;
+};
 
 /**
  * @brief Loads binary gauge asset files
@@ -22,7 +50,7 @@ public:
         std::string name;
         uint32_t width;
         uint32_t height;
-        std::vector<uint8_t> path_data;
+        std::vector<Path> paths;
         std::vector<uint8_t> animation_data;
         std::vector<uint8_t> pid_binding_data;
     };
@@ -45,10 +73,6 @@ public:
      * @brief Validate gauge asset integrity
      */
     bool validate_asset(const GaugeAsset& asset);
-
-private:
-    bool parse_header(const uint8_t* buffer, size_t buffer_size, 
-                      uint32_t& width_out, uint32_t& height_out);
 };
 
 } // namespace digidash
