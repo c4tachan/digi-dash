@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="720"
+   height="720"
+   viewBox="0 0 720 720"
+   version="1.1"
+   id="svg1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <rect
+       x="216.99265"
+       y="386.69205"
+       width="300.45135"
+       height="151.61665"
+       id="rect3" />
+    <rect
+       x="171.09036"
+       y="208.64677"
+       width="363.04541"
+       height="275.41376"
+       id="rect2" />
+  </defs>
+  <circle
+     style="fill:#000000;stroke-width:0.999999"
+     id="path1"
+     cx="360"
+     cy="360"
+     r="360" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:205.747px;font-family:Consolas;-inkscape-font-specification:'Consolas, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;writing-mode:lr-tb;direction:ltr;fill:#ffffff;stroke-width:2.1432"
+     x="212.76685"
+     y="480.61026"
+     id="speed-value"><tspan
+       id="tspan4"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:205.747px;font-family:Consolas;-inkscape-font-specification:'Consolas, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:2.1432"
+       x="212.76685"
+       y="480.61026">000</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:63.9999px;font-family:GonzalesSans;-inkscape-font-specification:'GonzalesSans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;writing-mode:lr-tb;direction:ltr;fill:#ffffff;stroke-width:0.999999"
+     x="233.41318"
+     y="565.49603"
+     id="speed-label"><tspan
+       id="tspan5"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:63.9999px;font-family:GonzalesSans;-inkscape-font-specification:'GonzalesSans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.999999"
+       x="233.41318"
+       y="565.49603">MPH</tspan></text>
+  <path
+     style="fill:none;stroke:#ff0000;stroke-width:20;stroke-dasharray:none;stroke-linecap:round"
+     id="rpm-path"
+     d="M 176.45481,622.12864 A 320.00126,319.99999 0 0 1 90.113681,188.06412 320.00126,319.99999 0 0 1 520.00063,82.871887" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:48px;font-family:Consolas;-inkscape-font-specification:'Consolas, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;writing-mode:lr-tb;direction:ltr;fill:none;stroke:#999999;stroke-width:5.00001;stroke-dasharray:none"
+     x="326.6033"
+     y="659.77911"
+     id="rpm-value"><tspan
+       id="tspan6"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:48px;font-family:Consolas;-inkscape-font-specification:'Consolas, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:5.00001"
+       x="326.6033"
+       y="659.77911">0000</tspan></text>
+  <path
+     style="fill:none;stroke:#0000ff;stroke-width:20;stroke-dasharray:none;stroke-linecap:round"
+     id="temp-path-reversed"
+     d="m 605.13422,154.30797 a 319.99999,319.99999 0 0 1 0,411.38405" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:48px;font-family:Consolas;-inkscape-font-specification:'Consolas, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;writing-mode:lr-tb;direction:ltr;fill:none;stroke:#999999;stroke-width:5.00001;stroke-dasharray:none"
+     x="621.7674"
+     y="377.4375"
+     id="temp-value"><tspan
+       id="tspan7"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:48px;font-family:Consolas;-inkscape-font-specification:'Consolas, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:5.00001"
+       x="621.7674"
+       y="377.4375">000</tspan></text>
+</svg>

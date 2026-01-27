@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="720"
+   height="720"
+   viewBox="0 0 720 720"
+   version="1.1"
+   xmlns="http://www.w3.org/2000/svg">
+  <!-- Black background circle -->
+  <circle
+     cx="360"
+     cy="360"
+     r="360"
+     fill="black" />
+  <!-- Red RPM arc -->
+  <path
+     d="M 176.45481,622.12864 A 320.00126,319.99999 0 0 1 90.113681,188.06412 320.00126,319.99999 0 0 1 520.00063,82.871887"
+     fill="none"
+     stroke="red"
+     stroke-width="20"
+     stroke-linecap="round" />
+  <!-- Blue temperature arc -->
+  <path
+     d="m 605.13422,154.30797 a 319.99999,319.99999 0 0 1 0,411.38405"
+     fill="none"
+     stroke="blue"
+     stroke-width="20"
+     stroke-linecap="round" />
+</svg>

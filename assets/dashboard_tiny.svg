@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="720" height="720" version="1.1" viewBox="0 0 720 720" xmlns="http://www.w3.org/2000/svg">
+ <circle cx="360" cy="360" r="360"/>
+ <text id="speed-value" x="212.76685" y="480.61026" fill="#ffffff" font-family="Consolas" font-size="205.75px" stroke-width="2.1432" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal" xml:space="preserve"><tspan x="212.76685" y="480.61026" font-family="Consolas" font-size="205.75px" stroke-width="2.1432" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal">000</tspan></text>
+ <text id="speed-label" x="233.41318" y="565.49603" fill="#ffffff" font-family="GonzalesSans" font-size="64px" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal" xml:space="preserve"><tspan x="233.41318" y="565.49603" font-family="GonzalesSans" font-size="64px" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal">MPH</tspan></text>
+ <g fill="none">
+  <path id="rpm-path" d="m176.45 622.13a320 320 0 0 1-86.341-434.06 320 320 0 0 1 429.89-105.19" stroke="#f00" stroke-linecap="round" stroke-width="20"/>
+  <text id="rpm-value" x="326.6033" y="659.77911" font-family="Consolas" font-size="48px" stroke="#999999" stroke-width="5" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal" xml:space="preserve"><tspan x="326.6033" y="659.77911" font-family="Consolas" font-size="48px" stroke-width="5" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal">0000</tspan></text>
+  <path id="temp-path-reversed" d="m605.13 154.31a320 320 0 0 1 0 411.38" stroke="#00f" stroke-linecap="round" stroke-width="20"/>
+  <text id="temp-value" x="621.7674" y="377.4375" font-family="Consolas" font-size="48px" stroke="#999999" stroke-width="5" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal" xml:space="preserve"><tspan x="621.7674" y="377.4375" font-family="Consolas" font-size="48px" stroke-width="5" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal">000</tspan></text>
+ </g>
+</svg>

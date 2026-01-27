@@ -3,7 +3,7 @@
   "idf.espIdfPath": "/home/catachan/esp/esp-idf",
   "idf.pythonInstallPath": "/usr/bin/python3",
   "idf.openOcdConfigs": [
-    "board/esp32c3-builtin.cfg"
+    "board/esp32s3-builtin.cfg"
   ],
   "idf.port": "detect",
   "idf.toolsPath": "/home/catachan/.espressif",

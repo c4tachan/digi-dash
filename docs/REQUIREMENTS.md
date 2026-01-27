@@ -19,21 +19,19 @@ Digi-Dash is an automotive dashboard display system designed for embedded system
 - **FR-2.1.6**: System shall support standard OBD-II commands (Mode 01, 02, 09)
 
 ### 2.2 Display and Visualization
-- **FR-2.2.1**: System shall display RPM gauge with arc visualization
-- **FR-2.2.2**: System shall display current speed value (3-digit precision)
-- **FR-2.2.3**: System shall display coolant temperature with arc indicator
-- **FR-2.2.4**: System shall support color-coded zones (green/yellow/red) for RPM ranges
-- **FR-2.2.5**: System shall display zone boundary markers on gauge
-- **FR-2.2.6**: System shall display tick marks at 500 RPM intervals (minor) and 1000 RPM (major)
+- **FR-2.2.1**: System shall render SVG images
+- **FR-2.2.2**: System shall use the id value on an svg entity to link that entity with a PID
+- **FR-2.2.3**: System shall PIDs shall be configured via a `display.json` file
+- **FR-2.2.4**: System shall support configuring equations for PIDs
+- **FR-2.2.5**: System shall support configuring zones for pids
+- **FR-2.2.6**: System shall support animating the SVG entities based on PID values
 - **FR-2.2.7**: Display shall refresh at minimum 20 FPS
-- **FR-2.2.8**: System shall support 480x320 display resolution (standard for TFT LCD)
+- **FR-2.2.8**: System shall support a configurable display resolution
 
 ### 2.3 Alerts and Safety
-- **FR-2.3.1**: System shall trigger visual alerts when RPM exceeds warning threshold
-- **FR-2.3.2**: System shall trigger visual alerts when temperature exceeds threshold
-- **FR-2.3.3**: Alert shall use flashing/color change for visual indication
-- **FR-2.3.4**: Alert conditions shall be configurable via `display.json`
-- **FR-2.3.5**: System shall log all alert events with timestamp
+- **FR-2.3.1**: System shall trigger visual alerts when any PID exceeds warning threshold
+- **FR-2.3.2**: Alert shall use a configurable flashing/color change for visual indication
+- **FR-2.3.3**: Alert conditions shall be configurable via `display.json`
 
 ### 2.4 Configuration
 - **FR-2.4.1**: System shall load all configuration from `display.json` file
