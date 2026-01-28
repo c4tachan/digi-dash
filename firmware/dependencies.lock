@@ -1,4 +1,59 @@
 dependencies:
+  espressif/cmake_utilities:
+    component_hash: 351350613ceafba240b761b4ea991e0f231ac7a9f59a9ee901f751bddc0bb18f
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.1'
+    source:
+      registry_url: https://components.espressif.com
+      type: service
+    version: 0.5.3
+  espressif/esp_io_expander:
+    component_hash: 034903704f65e3994d7cce9d080b19d89525cf6d416574b932826adf680f3942
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.4.2'
+    source:
+      registry_url: https://components.espressif.com
+      type: service
+    version: 1.2.0
+  espressif/esp_lcd_nv3052:
+    component_hash: 7ccd25c60032103853cfcfbaa70d3028627f4da09373d7dab55559a87b4d7935
+    dependencies:
+    - name: espressif/cmake_utilities
+      registry_url: https://components.espressif.com
+      require: private
+      version: 0.*
+    - name: idf
+      require: private
+      version: '>=5.4'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    targets:
+    - esp32s3
+    - esp32p4
+    version: 2.0.0
+  espressif/esp_lcd_panel_io_additions:
+    component_hash: 213d5c4a3c322a48c9f993d6bc2372206d34af95db34e87a3e02601bdcad7ce8
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.4.2'
+    - name: espressif/cmake_utilities
+      registry_url: https://components.espressif.com
+      require: private
+      version: 0.*
+    - name: espressif/esp_io_expander
+      registry_url: https://components.espressif.com
+      require: public
+      version: ^1
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.0.1
   espressif/esp_lcd_qemu_rgb:
     component_hash: e8981dd7399504a5ab647ce28a4876f8467c03b759895f50c24f0cb6095faaa0
     dependencies:
@@ -14,7 +69,9 @@ dependencies:
       type: idf
     version: 5.5.2
 direct_dependencies:
+- espressif/esp_lcd_nv3052
+- espressif/esp_lcd_panel_io_additions
 - espressif/esp_lcd_qemu_rgb
-manifest_hash: bcc8ac684296b0901aa35bc82a5c011fc40331408067be25314fac228d4ec207
+manifest_hash: 4c7393ee79d22e3aed7e6e58f027457c133a7866e17dace5a06a5dcdd2ed8f47
 target: esp32s3
 version: 2.0.0

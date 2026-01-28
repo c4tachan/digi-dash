@@ -61,6 +61,12 @@ build/
 # ThorVG local clone (we have it elsewhere)
 thorvg/
 
+# ESP-IDF managed components (downloaded dependencies)
+firmware/managed_components/
+
+# ESP-IDF config backups
+firmware/sdkconfig.old
+
 # Executables
 digi-dash-simulator
 *.exe

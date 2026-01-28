@@ -1,2 +1,4 @@
 dependencies:
   espressif/esp_lcd_qemu_rgb: "^1.0.0"
+  espressif/esp_lcd_nv3052: "^2.0.0"
+  espressif/esp_lcd_panel_io_additions: "^1.0.0"

@@ -1,0 +1,20 @@
+menu "Digi-Dash Configuration"
+
+    choice DIGI_DASH_TARGET
+        prompt "Target Hardware"
+        default DIGI_DASH_TARGET_QEMU
+        help
+            Select the target hardware for the build.
+
+        config DIGI_DASH_TARGET_QEMU
+            bool "QEMU Simulator"
+            help
+                Build for QEMU ESP32-S3 simulator with virtual RGB display.
+
+        config DIGI_DASH_TARGET_HARDWARE
+            bool "Hardware (NV3052C)"
+            help
+                Build for real hardware with NV3052C RGB display panel.
+    endchoice
+
+endmenu
