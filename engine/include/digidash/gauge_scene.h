@@ -33,8 +33,13 @@ public:
 
     /**
      * @brief Render the scene to a target buffer
+     * @param target_buffer The buffer to render into
+     * @param width Width of the target buffer
+     * @param height Height of the target buffer (tile height)
+     * @param stride Byte stride of the target buffer
+     * @param y_offset Y offset in the full gauge coordinate space (for tiled rendering)
      */
-    void render(uint8_t* target_buffer, int width, int height, int stride);
+    void render(uint8_t* target_buffer, int width, int height, int stride, int y_offset = 0);
 
     /**
      * @brief Set PID data value

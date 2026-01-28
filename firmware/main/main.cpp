@@ -6,23 +6,25 @@
 #include "esp_vfs.h"
 #include "esp_spiffs.h"
 #include "esp_heap_caps.h"
+#include "esp_lcd_panel_ops.h"
+#include "esp_lcd_qemu_rgb.h"
+#include "soc/syscon_reg.h"
+#include "soc/soc.h"
 
 #include "digidash/gauge_scene.h"
 #include "digidash/binary_gauge_loader.h"
 
 static const char* TAG = "digi-dash";
 
+#define RGB_QEMU_ORIGIN 0x51454d55
+
 // Display dimensions
 static const int DISPLAY_WIDTH = 720;
 static const int DISPLAY_HEIGHT = 720;
-static const int DISPLAY_STRIDE = DISPLAY_WIDTH * 4;
+static const int DISPLAY_STRIDE = DISPLAY_WIDTH * 2;  // RGB565 = 2 bytes per pixel
 
-// Tile-based rendering (render in 60-line chunks to save memory)
-static const int TILE_HEIGHT = 60;
-static const int TILE_SIZE = DISPLAY_WIDTH * TILE_HEIGHT * 4;
-
-// Framebuffer for rendering (tile-sized)
-static uint8_t* framebuffer = nullptr;
+// Framebuffer for full screen (RGB565)
+static uint16_t* framebuffer = nullptr;
 
 // Initialize SPIFFS for gauge file storage
 static void init_spiffs(void) {
@@ -56,15 +58,43 @@ static void init_spiffs(void) {
 extern "C" void app_main(void) {
     ESP_LOGI(TAG, "Digi-Dash ESP32-S3 Firmware starting...");
     
+    // Initialize QEMU RGB panel
+    REG_WRITE(SYSCON_DATE_REG - 4, RGB_QEMU_ORIGIN);
+    uint32_t qemu_origin = REG_READ(SYSCON_DATE_REG - 4);
+    ESP_LOGI(TAG, "QEMU origin register: 0x%08lx", (unsigned long)qemu_origin);
+    
+    ESP_LOGI(TAG, "Install RGB LCD panel driver");
+    esp_lcd_panel_handle_t panel_handle = NULL;
+    esp_lcd_rgb_qemu_config_t panel_config = {
+        .width = DISPLAY_WIDTH,
+        .height = DISPLAY_HEIGHT,
+        .bpp = RGB_QEMU_BPP_16,
+    };
+    ESP_ERROR_CHECK(esp_lcd_new_rgb_qemu(&panel_config, &panel_handle));
+    
+    ESP_LOGI(TAG, "Initialize RGB LCD panel");
+    ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
+    ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
+    
     // Initialize SPIFFS
     init_spiffs();
     
-    // Allocate tile-based framebuffer (much smaller)
-    ESP_LOGI(TAG, "Allocating tile buffer: %d bytes for %dx%d tile", 
-             TILE_SIZE, DISPLAY_WIDTH, TILE_HEIGHT);
-    framebuffer = (uint8_t*)malloc(TILE_SIZE);
+    // Allocate tile buffer for RGB565 (render in tiles, send directly to display)
+    const int TILE_HEIGHT = 60;
+    size_t tile_size = DISPLAY_WIDTH * TILE_HEIGHT * sizeof(uint16_t);
+    ESP_LOGI(TAG, "Allocating tile framebuffer: %zu bytes for %dx%d RGB565", 
+             tile_size, DISPLAY_WIDTH, TILE_HEIGHT);
+    framebuffer = (uint16_t*)heap_caps_malloc(tile_size, MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL);
     if (!framebuffer) {
         ESP_LOGE(TAG, "Failed to allocate framebuffer");
+        return;
+    }
+    
+    // Allocate RGBA tile buffer for rendering
+    uint8_t* rgba_buffer = (uint8_t*)heap_caps_malloc(DISPLAY_WIDTH * TILE_HEIGHT * 4, MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL);
+    if (!rgba_buffer) {
+        ESP_LOGE(TAG, "Failed to allocate RGBA tile buffer");
+        free(framebuffer);
         return;
     }
     
@@ -111,8 +141,8 @@ extern "C" void app_main(void) {
     digidash::BinaryGaugeLoader::GaugeAsset asset;
     
     if (loader.load_from_buffer(gauge_data, gauge_size, asset)) {
-        ESP_LOGI(TAG, "Gauge parsed: %dx%d with %zu paths", 
-                 asset.width, asset.height, asset.paths.size());
+        ESP_LOGI(TAG, "Gauge parsed: %lux%lu with %zu paths", 
+                 (unsigned long)asset.width, (unsigned long)asset.height, asset.paths.size());
         
         // Load the gauge into the scene
         gauge_scene.load_gauge(asset);
@@ -121,39 +151,42 @@ extern "C" void app_main(void) {
         
         // Render loop
         int frame_count = 0;
-        ESP_LOGI(TAG, "Entering render loop...");
+        const int TILE_HEIGHT = 60;
+        const int num_tiles = (DISPLAY_HEIGHT + TILE_HEIGHT - 1) / TILE_HEIGHT;
+        ESP_LOGI(TAG, "Entering render loop... (tiles: %d)", num_tiles);
         
         while (1) {
-            // Clear tile buffer
-            std::memset(framebuffer, 0, TILE_SIZE);
-            
-            // Render gauge to framebuffer (tile-sized: 720x60)
-            gauge_scene.render(framebuffer, DISPLAY_WIDTH, TILE_HEIGHT, DISPLAY_STRIDE);
-            
-            // Count non-zero pixels to verify rendering
-            int non_zero_pixels = 0;
-            for (int i = 0; i < TILE_SIZE; i += 4) {
-                if (framebuffer[i] != 0 || framebuffer[i+1] != 0 || 
-                    framebuffer[i+2] != 0 || framebuffer[i+3] != 0) {
-                    non_zero_pixels++;
+            // Render frame tile by tile and send each tile to display
+            for (int tile = 0; tile < num_tiles; tile++) {
+                int tile_y = tile * TILE_HEIGHT;
+                int tile_h = (tile_y + TILE_HEIGHT > DISPLAY_HEIGHT) ? (DISPLAY_HEIGHT - tile_y) : TILE_HEIGHT;
+                
+                // Clear RGBA tile buffer
+                std::memset(rgba_buffer, 0, DISPLAY_WIDTH * tile_h * 4);
+                
+                // Render this tile (pass y_offset so it knows which vertical slice to render)
+                gauge_scene.render(rgba_buffer, DISPLAY_WIDTH, tile_h, DISPLAY_WIDTH * 4, tile_y);
+                
+                // Convert RGBA to RGB565 in tile buffer
+                for (int y = 0; y < tile_h; y++) {
+                    for (int x = 0; x < DISPLAY_WIDTH; x++) {
+                        int rgba_idx = (y * DISPLAY_WIDTH + x) * 4;
+                        int fb_idx = y * DISPLAY_WIDTH + x;
+                        
+                        uint8_t r = rgba_buffer[rgba_idx + 0];
+                        uint8_t g = rgba_buffer[rgba_idx + 1];
+                        uint8_t b = rgba_buffer[rgba_idx + 2];
+                        framebuffer[fb_idx] = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+                    }
                 }
+                
+                // Send this tile to QEMU display
+                esp_lcd_panel_draw_bitmap(panel_handle, 0, tile_y, DISPLAY_WIDTH, tile_y + tile_h, framebuffer);
             }
             
             frame_count++;
-            
-            // Log rendering statistics
-            if (frame_count <= 5 || frame_count % 30 == 0) {
-                // Sample pixel at center top of circle (x=360, y=0) - should be filled black
-                int center_offset = 0 * DISPLAY_STRIDE + 360 * 4;
-                uint8_t r_center = framebuffer[center_offset + 0];
-                uint8_t g_center = framebuffer[center_offset + 1];
-                uint8_t b_center = framebuffer[center_offset + 2];
-                uint8_t a_center = framebuffer[center_offset + 3];
-                
-                ESP_LOGI(TAG, "Frame %d: %d pixels (%.1f%%) | center[360,0]=RGBA(%d,%d,%d,%d)", 
-                         frame_count, non_zero_pixels, 
-                         (non_zero_pixels * 100.0f) / (TILE_SIZE / 4),
-                         r_center, g_center, b_center, a_center);
+            if (frame_count % 30 == 0) {
+                ESP_LOGI(TAG, "Frame %d rendered", frame_count);
             }
             
             vTaskDelay(33 / portTICK_PERIOD_MS);  // ~30 FPS

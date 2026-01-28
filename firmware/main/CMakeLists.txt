@@ -1,6 +1,6 @@
 idf_component_register(SRCS "main.cpp"
                        INCLUDE_DIRS "."
-                       REQUIRES freertos esp_hw_support esp_system vfs spiffs)
+                       REQUIRES freertos esp_hw_support esp_system vfs spiffs esp_lcd esp_timer)
 
 # Get the firmware CMakeLists location
 set(FIRMWARE_ENGINE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../engine")

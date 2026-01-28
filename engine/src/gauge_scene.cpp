@@ -133,12 +133,12 @@ void GaugeScene::update(uint32_t delta_ms) {
 }
 
 void GaugeScene::render(uint8_t* target_buffer, int width, int height,
-                        int stride) {
+                        int stride, int y_offset) {
     if (!renderer_ || paths_.empty()) return;
     
-    // Render all paths
+    // Render all paths with y_offset for tiled rendering
     for (const auto& path : paths_) {
-        renderer_->render_path(path, target_buffer, width, height, stride);
+        renderer_->render_path(path, target_buffer, width, height, stride, y_offset);
     }
 }
 

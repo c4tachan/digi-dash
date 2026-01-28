@@ -11,7 +11,7 @@ VectorRenderer::VectorRenderer() : quality_level_(2) {}
 VectorRenderer::~VectorRenderer() {}
 
 void VectorRenderer::render_path(const BezierPath& path, uint8_t* target_buffer,
-                                 int width, int height, int stride) {
+                                 int width, int height, int stride, int y_offset) {
     if (!target_buffer || path.control_points.empty()) {
         return;
     }
@@ -26,11 +26,11 @@ void VectorRenderer::render_path(const BezierPath& path, uint8_t* target_buffer,
     if (path.is_filled) {
         // Draw filled shape - simple polygon fill
         draw_filled_path(path.control_points, target_buffer, width, height, 
-                        stride, r, g, b, a);
+                        stride, r, g, b, a, y_offset);
     } else {
         // Draw stroked path - polyline
         draw_stroked_path(path.control_points, target_buffer, width, height,
-                         stride, r, g, b, a, path.stroke_width, path.stroke_cap);
+                         stride, r, g, b, a, path.stroke_width, path.stroke_cap, y_offset);
     }
 }
 
@@ -49,7 +49,7 @@ void VectorRenderer::set_quality(int quality_level) {
 void VectorRenderer::draw_filled_path(const std::vector<Point>& points,
                                       uint8_t* buffer, int width, int height,
                                       int stride, uint8_t r, uint8_t g,
-                                      uint8_t b, uint8_t a) {
+                                      uint8_t b, uint8_t a, int y_offset) {
     // Simple flood-fill using scanline algorithm
     if (points.empty()) return;
     
@@ -69,13 +69,14 @@ void VectorRenderer::draw_filled_path(const std::vector<Point>& points,
         max_y = std::max(max_y, p.y);
     }
     
-    int start_y = std::max(0, (int)min_y);
-    int end_y = std::min(height - 1, (int)max_y + 1);
+    // Clip to tile bounds (accounting for y_offset)
+    int start_y = std::max(0, (int)min_y - y_offset);
+    int end_y = std::min(height - 1, (int)max_y - y_offset + 1);
     
     #ifdef ESP_PLATFORM
     if (do_log) {
-        printf("draw_filled_path: bbox y=[%.1f,%.1f] clipped=[%d,%d] RGBA(%d,%d,%d,%d) tile_h=%d\n",
-               min_y, max_y, start_y, end_y, r, g, b, a, height);
+        printf("draw_filled_path: bbox y=[%.1f,%.1f] y_offset=%d clipped=[%d,%d] RGBA(%d,%d,%d,%d) tile_h=%d\n",
+               min_y, max_y, y_offset, start_y, end_y, r, g, b, a, height);
     }
     #endif
     
@@ -83,17 +84,20 @@ void VectorRenderer::draw_filled_path(const std::vector<Point>& points,
     for (int y = start_y; y <= end_y; ++y) {
         std::vector<float> intersections;
         
+        // Actual y coordinate in full space
+        float actual_y = y + y_offset;
+        
         // Find all intersections with edges
         for (size_t i = 0; i < points.size(); ++i) {
             size_t j = (i + 1) % points.size();
             const Point& p1 = points[i];
             const Point& p2 = points[j];
             
-            // Check if edge crosses scanline y
-            if ((p1.y <= y && p2.y > y) || (p2.y <= y && p1.y > y)) {
+            // Check if edge crosses scanline at actual_y
+            if ((p1.y <= actual_y && p2.y > actual_y) || (p2.y <= actual_y && p1.y > actual_y)) {
                 float dy = p2.y - p1.y;
                 if (dy != 0.0f) {  // Avoid divide by zero
-                    float x_intersect = p1.x + (y - p1.y) / dy * (p2.x - p1.x);
+                    float x_intersect = p1.x + (actual_y - p1.y) / dy * (p2.x - p1.x);
                     intersections.push_back(x_intersect);
                 }
             }
@@ -130,13 +134,26 @@ void VectorRenderer::draw_stroked_path(const std::vector<Point>& points,
                                        uint8_t* buffer, int width, int height,
                                        int stride, uint8_t r, uint8_t g,
                                        uint8_t b, uint8_t a,
-                                       float stroke_width, StrokeLineCap cap) {
+                                       float stroke_width, StrokeLineCap cap, int y_offset) {
     if (points.empty()) return;
+    
+    #ifdef ESP_PLATFORM
+    static int stroke_count = 0;
+    if (stroke_count < 2) {
+        printf("draw_stroked_path: %zu points, RGBA(%d,%d,%d,%d), width=%.1f, y_offset=%d, tile_h=%d\n",
+               points.size(), r, g, b, a, stroke_width, y_offset, height);
+        if (points.size() > 0) {
+            printf("  First point: (%.1f, %.1f)\n", points[0].x, points[0].y);
+            printf("  Last point: (%.1f, %.1f)\n", points.back().x, points.back().y);
+        }
+        stroke_count++;
+    }
+    #endif
     
     // Draw line segments between consecutive points
     for (size_t i = 0; i + 1 < points.size(); ++i) {
         draw_line(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y,
-                 buffer, width, height, stride, r, g, b, a, stroke_width);
+                 buffer, width, height, stride, r, g, b, a, stroke_width, y_offset);
     }
     
     // Draw caps at endpoints if round
@@ -146,23 +163,22 @@ void VectorRenderer::draw_stroked_path(const std::vector<Point>& points,
         
         // Start cap at first point - render in stroke color
         draw_round_cap(points[0].x, points[0].y, buffer, width, height,
-                      stride, r, g, b, a, radius);
+                      stride, r, g, b, a, radius, y_offset);
         
         // End cap at last point - render in stroke color
         draw_round_cap(points.back().x, points.back().y, buffer, width, height,
-                      stride, r, g, b, a, radius);
+                      stride, r, g, b, a, radius, y_offset);
     } else if (cap == StrokeLineCap::Round && points.size() == 1) {
         // Single point: just draw a circle at that location
         float radius = stroke_width / 2.0f;
         draw_round_cap(points[0].x, points[0].y, buffer, width, height,
-                      stride, 0, 255, 0, 255, radius);
+                      stride, 0, 255, 0, 255, radius, y_offset);
     }
 }
-
 void VectorRenderer::draw_line(float x0, float y0, float x1, float y1,
                                 uint8_t* buffer, int width, int height,
                                 int stride, uint8_t r, uint8_t g, uint8_t b,
-                                uint8_t a, float stroke_width) {
+                                uint8_t a, float stroke_width, int y_offset) {
     // Draw line with circular stroke (not square)
     float dx = x1 - x0;
     float dy = y1 - y0;
@@ -174,7 +190,8 @@ void VectorRenderer::draw_line(float x0, float y0, float x1, float y1,
         int rad_int = (int)(radius + 1.0f);
         for (int cy = -rad_int; cy <= rad_int; ++cy) {
             int py = (int)y0 + cy;
-            if (py < 0 || py >= height) continue;
+            if (py < y_offset || py >= y_offset + height) continue;
+            int tile_y = py - y_offset;
             
             for (int cx = -rad_int; cx <= rad_int; ++cx) {
                 int px = (int)x0 + cx;
@@ -182,7 +199,7 @@ void VectorRenderer::draw_line(float x0, float y0, float x1, float y1,
                 
                 float dist = std::sqrt(cx * cx + cy * cy);
                 if (dist <= radius) {
-                    int offset = py * stride + px * 4;
+                    int offset = tile_y * stride + px * 4;
                     buffer[offset + 0] = r;
                     buffer[offset + 1] = g;
                     buffer[offset + 2] = b;
@@ -214,7 +231,8 @@ void VectorRenderer::draw_line(float x0, float y0, float x1, float y1,
         int rad_int = (int)(radius + 1.5f);
         for (int dy_pix = -rad_int; dy_pix <= rad_int; ++dy_pix) {
             int py = (int)cy + dy_pix;
-            if (py < 0 || py >= height) continue;
+            if (py < y_offset || py >= y_offset + height) continue;
+            int tile_y = py - y_offset;
             
             for (int dx_pix = -rad_int; dx_pix <= rad_int; ++dx_pix) {
                 int px = (int)cx + dx_pix;
@@ -222,7 +240,7 @@ void VectorRenderer::draw_line(float x0, float y0, float x1, float y1,
                 
                 float dist = std::sqrt(dx_pix * dx_pix + dy_pix * dy_pix);
                 if (dist <= radius) {
-                    int offset = py * stride + px * 4;
+                    int offset = tile_y * stride + px * 4;
                     buffer[offset + 0] = r;
                     buffer[offset + 1] = g;
                     buffer[offset + 2] = b;
@@ -236,7 +254,7 @@ void VectorRenderer::draw_line(float x0, float y0, float x1, float y1,
 void VectorRenderer::draw_round_cap(float x, float y, uint8_t* buffer,
                                     int width, int height, int stride,
                                     uint8_t r, uint8_t g, uint8_t b, uint8_t a,
-                                    float radius) {
+                                    float radius, int y_offset) {
     // Draw a filled circle at the endpoint with anti-aliasing
     float cx = x;
     float cy = y;
@@ -248,7 +266,8 @@ void VectorRenderer::draw_round_cap(float x, float y, uint8_t* buffer,
     // Draw filled circle scanline by scanline with anti-aliasing
     for (int dy = -rad_int; dy <= rad_int; ++dy) {
         int py = cy + dy;
-        if (py < 0 || py >= height) continue;
+        if (py < y_offset || py >= y_offset + height) continue;
+        int tile_y = py - y_offset;
         
         float y_dist = std::abs((float)dy);
         if (y_dist > rad + 1.0f) continue;
@@ -270,7 +289,7 @@ void VectorRenderer::draw_round_cap(float x, float y, uint8_t* buffer,
             
             // Use distance-based blending for smooth edges
             if (dist <= rad) {
-                int offset = py * stride + px * 4;
+                int offset = tile_y * stride + px * 4;
                 if (offset + 3 < stride * height) {
                     buffer[offset + 0] = r;
                     buffer[offset + 1] = g;
@@ -280,7 +299,7 @@ void VectorRenderer::draw_round_cap(float x, float y, uint8_t* buffer,
             } else if (dist <= rad + 1.5f) {
                 // Anti-aliased edge pixels
                 float blend = 1.0f - (dist - rad) / 1.5f;
-                int offset = py * stride + px * 4;
+                int offset = tile_y * stride + px * 4;
                 if (offset + 3 < stride * height) {
                     buffer[offset + 0] = (uint8_t)(buffer[offset + 0] * (1.0f - blend) + r * blend);
                     buffer[offset + 1] = (uint8_t)(buffer[offset + 1] * (1.0f - blend) + g * blend);
