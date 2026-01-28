@@ -17,11 +17,11 @@ static const int DISPLAY_WIDTH = 720;
 static const int DISPLAY_HEIGHT = 720;
 static const int DISPLAY_STRIDE = DISPLAY_WIDTH * 4;
 
-// Draw buffer dimensions (smaller buffer for tile-based rendering)
-static const int BUFFER_HEIGHT = 60;  // Render in 60-line chunks
-static const int BUFFER_SIZE = DISPLAY_WIDTH * BUFFER_HEIGHT * 4;  // ~169KB
+// Tile-based rendering (render in 60-line chunks to save memory)
+static const int TILE_HEIGHT = 60;
+static const int TILE_SIZE = DISPLAY_WIDTH * TILE_HEIGHT * 4;
 
-// Draw buffer for rendering
+// Framebuffer for rendering (tile-sized)
 static uint8_t* framebuffer = nullptr;
 
 // Initialize SPIFFS for gauge file storage
@@ -59,12 +59,10 @@ extern "C" void app_main(void) {
     // Initialize SPIFFS
     init_spiffs();
     
-    // Allocate draw buffer (much smaller than full framebuffer)
-    ESP_LOGI(TAG, "Allocating draw buffer: %d bytes (%.2f KB) for %dx%d tiles", 
-             BUFFER_SIZE, BUFFER_SIZE / 1024.0, DISPLAY_WIDTH, BUFFER_HEIGHT);
-    
-    framebuffer = (uint8_t*)malloc(BUFFER_SIZE);
-    
+    // Allocate tile-based framebuffer (much smaller)
+    ESP_LOGI(TAG, "Allocating tile buffer: %d bytes for %dx%d tile", 
+             TILE_SIZE, DISPLAY_WIDTH, TILE_HEIGHT);
+    framebuffer = (uint8_t*)malloc(TILE_SIZE);
     if (!framebuffer) {
         ESP_LOGE(TAG, "Failed to allocate framebuffer");
         return;
@@ -119,29 +117,19 @@ extern "C" void app_main(void) {
         // Load the gauge into the scene
         gauge_scene.load_gauge(asset);
         
-        // Render loop with tile-based rendering
-        int frame_count = 0;
-        const int num_tiles = (DISPLAY_HEIGHT + BUFFER_HEIGHT - 1) / BUFFER_HEIGHT;
+        ESP_LOGI(TAG, "Gauge scene loaded, starting render loop");
         
-        ESP_LOGI(TAG, "Starting render loop: %d tiles of %d lines each", num_tiles, BUFFER_HEIGHT);
+        // Render loop
+        int frame_count = 0;
         
         while (1) {
-            // Render each tile
-            for (int tile = 0; tile < num_tiles; tile++) {
-                int y_start = tile * BUFFER_HEIGHT;
-                int y_end = (tile + 1) * BUFFER_HEIGHT;
-                if (y_end > DISPLAY_HEIGHT) y_end = DISPLAY_HEIGHT;
-                int tile_height = y_end - y_start;
-                
-                // Clear draw buffer
-                std::memset(framebuffer, 0, DISPLAY_WIDTH * tile_height * 4);
-                
-                // Render this tile of the gauge
-                // TODO: Need to pass y_offset to render only this section
-                gauge_scene.render(framebuffer, DISPLAY_WIDTH, tile_height, DISPLAY_STRIDE);
-                
-                // TODO: Send this tile to display at position (0, y_start)
-            }
+            // Clear tile buffer
+            std::memset(framebuffer, 0, TILE_SIZE);
+            
+            // Render gauge to framebuffer
+            ESP_LOGD(TAG, "Frame %d: Starting render", frame_count);
+            gauge_scene.render(framebuffer, DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_STRIDE);
+            ESP_LOGD(TAG, "Frame %d: Render complete", frame_count);
             
             // Log periodically
             if (++frame_count % 30 == 0) {

@@ -16,12 +16,14 @@ void GaugeSerializer::write_binary(const GaugeDocument& doc, const std::string& 
         throw std::runtime_error("Failed to open output file: " + out_path);
     }
 
-    // Header: magic + version + path_count
+    // Header: magic + version + path_count + width + height
     const char magic[4] = {'D', 'G', 'G', 'E'};
     os.write(magic, 4);
     uint16_t version = 1;
     write_u16(os, version);
     write_u16(os, static_cast<uint16_t>(doc.paths.size()));
+    write_u16(os, static_cast<uint16_t>(doc.width));
+    write_u16(os, static_cast<uint16_t>(doc.height));
 
     for (const auto& path : doc.paths) {
         uint8_t id_len = static_cast<uint8_t>(path.id.size());

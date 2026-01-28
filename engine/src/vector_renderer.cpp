@@ -79,8 +79,11 @@ void VectorRenderer::draw_filled_path(const std::vector<Point>& points,
             
             // Check if edge crosses scanline y
             if ((p1.y <= y && p2.y > y) || (p2.y <= y && p1.y > y)) {
-                float x_intersect = p1.x + (y - p1.y) / (p2.y - p1.y) * (p2.x - p1.x);
-                intersections.push_back(x_intersect);
+                float dy = p2.y - p1.y;
+                if (dy != 0.0f) {  // Avoid divide by zero
+                    float x_intersect = p1.x + (y - p1.y) / dy * (p2.x - p1.x);
+                    intersections.push_back(x_intersect);
+                }
             }
         }
         

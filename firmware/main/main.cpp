@@ -5,6 +5,7 @@
 #include "esp_log.h"
 #include "esp_vfs.h"
 #include "esp_spiffs.h"
+#include "esp_heap_caps.h"
 
 #include "digidash/gauge_scene.h"
 #include "digidash/binary_gauge_loader.h"
@@ -16,7 +17,11 @@ static const int DISPLAY_WIDTH = 720;
 static const int DISPLAY_HEIGHT = 720;
 static const int DISPLAY_STRIDE = DISPLAY_WIDTH * 4;
 
-// Framebuffer for rendering
+// Tile-based rendering (render in 60-line chunks to save memory)
+static const int TILE_HEIGHT = 60;
+static const int TILE_SIZE = DISPLAY_WIDTH * TILE_HEIGHT * 4;
+
+// Framebuffer for rendering (tile-sized)
 static uint8_t* framebuffer = nullptr;
 
 // Initialize SPIFFS for gauge file storage
@@ -33,8 +38,6 @@ static void init_spiffs(void) {
     if (ret != ESP_OK) {
         if (ret == ESP_FAIL) {
             ESP_LOGE(TAG, "Failed to mount or format filesystem");
-        } else if (ret == ESP_ERR_ESP_SPIFFS_INVALID_PARTITION_LABEL) {
-            ESP_LOGE(TAG, "Set proper flash chip in menuconfig");
         } else {
             ESP_LOGE(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
         }
@@ -56,8 +59,10 @@ extern "C" void app_main(void) {
     // Initialize SPIFFS
     init_spiffs();
     
-    // Allocate framebuffer
-    framebuffer = (uint8_t*)malloc(DISPLAY_HEIGHT * DISPLAY_STRIDE);
+    // Allocate tile-based framebuffer (much smaller)
+    ESP_LOGI(TAG, "Allocating tile buffer: %d bytes for %dx%d tile", 
+             TILE_SIZE, DISPLAY_WIDTH, TILE_HEIGHT);
+    framebuffer = (uint8_t*)malloc(TILE_SIZE);
     if (!framebuffer) {
         ESP_LOGE(TAG, "Failed to allocate framebuffer");
         return;
@@ -112,21 +117,24 @@ extern "C" void app_main(void) {
         // Load the gauge into the scene
         gauge_scene.load_gauge(asset);
         
+        ESP_LOGI(TAG, "Gauge scene loaded, starting render loop");
+        
         // Render loop
         int frame_count = 0;
+        
         while (1) {
-            // Clear framebuffer
-            std::memset(framebuffer, 0, DISPLAY_HEIGHT * DISPLAY_STRIDE);
+            // Clear tile buffer
+            std::memset(framebuffer, 0, TILE_SIZE);
             
-            // Render gauge to framebuffer
-            gauge_scene.render(framebuffer, DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_STRIDE);
+            // Render gauge to framebuffer (tile-sized: 720x60)
+            ESP_LOGD(TAG, "Frame %d: Starting render", frame_count);
+            gauge_scene.render(framebuffer, DISPLAY_WIDTH, TILE_HEIGHT, DISPLAY_STRIDE);
+            ESP_LOGD(TAG, "Frame %d: Render complete", frame_count);
             
             // Log periodically
             if (++frame_count % 30 == 0) {
                 ESP_LOGI(TAG, "Rendering... frame %d", frame_count);
             }
-            
-            // TODO: Send framebuffer to display (LVGL, SPI, etc.)
             
             vTaskDelay(33 / portTICK_PERIOD_MS);  // ~30 FPS
         }

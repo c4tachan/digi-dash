@@ -55,9 +55,18 @@ bool BinaryGaugeLoader::load_from_buffer(const uint8_t* buffer,
     std::memcpy(&path_count, buffer + offset, sizeof(uint16_t));
     offset += sizeof(uint16_t);
     
-    // Set default dimensions (will be overridden if format includes them)
-    asset_out.width = 800;
-    asset_out.height = 600;
+    // Read dimensions from binary format
+    if (offset + 4 > buffer_size) {
+        return false;  // Not enough data for dimensions
+    }
+    uint16_t width, height;
+    std::memcpy(&width, buffer + offset, sizeof(uint16_t));
+    offset += sizeof(uint16_t);
+    std::memcpy(&height, buffer + offset, sizeof(uint16_t));
+    offset += sizeof(uint16_t);
+    
+    asset_out.width = width;
+    asset_out.height = height;
     
     // Parse each path
     for (uint16_t i = 0; i < path_count; ++i) {

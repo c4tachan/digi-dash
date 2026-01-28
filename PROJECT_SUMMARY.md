@@ -47,7 +47,7 @@ digi-dash/
 │   └── svg_preprocessor/  # SVG → .gauge converter
 ├── simulator/             # Desktop SDL2 application
 ├── firmware/              # ESP32 firmware (ESP-IDF)
-├── idf_project/           # ESP-IDF build directory
+├── firmware/              # ESP-IDF firmware project (main build location)
 ├── assets/
 │   ├── dashboard_tiny.svg # Source gauge design
 │   └── dashboard_tiny.gauge # Preprocessed binary
@@ -85,7 +85,7 @@ cmake .. && make -j4
 source ~/esp-idf-5.5/export.sh
 
 # Build
-cd /home/catachan/projects/digi-dash/idf_project
+cd /home/catachan/projects/digi-dash/firmware
 idf.py build
 
 # Run in QEMU
