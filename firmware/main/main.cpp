@@ -121,19 +121,39 @@ extern "C" void app_main(void) {
         
         // Render loop
         int frame_count = 0;
+        ESP_LOGI(TAG, "Entering render loop...");
         
         while (1) {
             // Clear tile buffer
             std::memset(framebuffer, 0, TILE_SIZE);
             
             // Render gauge to framebuffer (tile-sized: 720x60)
-            ESP_LOGD(TAG, "Frame %d: Starting render", frame_count);
             gauge_scene.render(framebuffer, DISPLAY_WIDTH, TILE_HEIGHT, DISPLAY_STRIDE);
-            ESP_LOGD(TAG, "Frame %d: Render complete", frame_count);
             
-            // Log periodically
-            if (++frame_count % 30 == 0) {
-                ESP_LOGI(TAG, "Rendering... frame %d", frame_count);
+            // Count non-zero pixels to verify rendering
+            int non_zero_pixels = 0;
+            for (int i = 0; i < TILE_SIZE; i += 4) {
+                if (framebuffer[i] != 0 || framebuffer[i+1] != 0 || 
+                    framebuffer[i+2] != 0 || framebuffer[i+3] != 0) {
+                    non_zero_pixels++;
+                }
+            }
+            
+            frame_count++;
+            
+            // Log rendering statistics
+            if (frame_count <= 5 || frame_count % 30 == 0) {
+                // Sample pixel at center top of circle (x=360, y=0) - should be filled black
+                int center_offset = 0 * DISPLAY_STRIDE + 360 * 4;
+                uint8_t r_center = framebuffer[center_offset + 0];
+                uint8_t g_center = framebuffer[center_offset + 1];
+                uint8_t b_center = framebuffer[center_offset + 2];
+                uint8_t a_center = framebuffer[center_offset + 3];
+                
+                ESP_LOGI(TAG, "Frame %d: %d pixels (%.1f%%) | center[360,0]=RGBA(%d,%d,%d,%d)", 
+                         frame_count, non_zero_pixels, 
+                         (non_zero_pixels * 100.0f) / (TILE_SIZE / 4),
+                         r_center, g_center, b_center, a_center);
             }
             
             vTaskDelay(33 / portTICK_PERIOD_MS);  // ~30 FPS

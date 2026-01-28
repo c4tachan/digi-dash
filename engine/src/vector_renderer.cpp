@@ -53,6 +53,11 @@ void VectorRenderer::draw_filled_path(const std::vector<Point>& points,
     // Simple flood-fill using scanline algorithm
     if (points.empty()) return;
     
+    #ifdef ESP_PLATFORM
+    static int render_count = 0;
+    bool do_log = (render_count++ < 3); // Log first 3 renders
+    #endif
+    
     // Find bounding box
     float min_x = points[0].x, max_x = points[0].x;
     float min_y = points[0].y, max_y = points[0].y;
@@ -66,6 +71,13 @@ void VectorRenderer::draw_filled_path(const std::vector<Point>& points,
     
     int start_y = std::max(0, (int)min_y);
     int end_y = std::min(height - 1, (int)max_y + 1);
+    
+    #ifdef ESP_PLATFORM
+    if (do_log) {
+        printf("draw_filled_path: bbox y=[%.1f,%.1f] clipped=[%d,%d] RGBA(%d,%d,%d,%d) tile_h=%d\n",
+               min_y, max_y, start_y, end_y, r, g, b, a, height);
+    }
+    #endif
     
     // For each scanline in bounding box
     for (int y = start_y; y <= end_y; ++y) {
@@ -95,6 +107,7 @@ void VectorRenderer::draw_filled_path(const std::vector<Point>& points,
             int x1 = std::max(0, (int)intersections[i]);
             int x2 = std::min(width - 1, (int)intersections[i + 1] + 1);
             
+            static int pixel_write_count = 0;
             for (int x = x1; x < x2; ++x) {
                 int pixel_offset = y * stride + x * 4;
                 if (pixel_offset + 3 < stride * height) {
@@ -102,6 +115,11 @@ void VectorRenderer::draw_filled_path(const std::vector<Point>& points,
                     buffer[pixel_offset + 1] = g;
                     buffer[pixel_offset + 2] = b;
                     buffer[pixel_offset + 3] = a;
+                    if (pixel_write_count < 5) {
+                        printf("  Pixel write [%d]: offset=%d y=%d x=%d RGBA(%d,%d,%d,%d)\n", 
+                               pixel_write_count, pixel_offset, y, x, r, g, b, a);
+                        pixel_write_count++;
+                    }
                 }
             }
         }

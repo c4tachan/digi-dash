@@ -2,6 +2,11 @@
 #include <cstring>
 #include <algorithm>
 
+#ifdef ESP_PLATFORM
+#include "esp_log.h"
+static const char* GAUGE_TAG = "gauge_scene";
+#endif
+
 namespace digidash {
 
 GaugeScene::GaugeScene()
@@ -21,7 +26,8 @@ bool GaugeScene::load_gauge(const BinaryGaugeLoader::GaugeAsset& asset) {
     // Convert Path structure to BezierPath for rendering
     paths_.clear();
     
-    for (const auto& path : asset.paths) {
+    for (size_t i = 0; i < asset.paths.size(); ++i) {
+        const auto& path = asset.paths[i];
         VectorRenderer::BezierPath bezier_path;
         
         // Convert color from Color struct to uint32
@@ -41,6 +47,16 @@ bool GaugeScene::load_gauge(const BinaryGaugeLoader::GaugeAsset& asset) {
                                (path.fill.color.r << 16) |
                                (path.fill.color.g << 8) |
                                path.fill.color.b;
+            #ifdef ESP_PLATFORM
+            ESP_LOGI(GAUGE_TAG, "Path %d: FILLED RGBA(%d,%d,%d,%d)", 
+                     (int)i, path.fill.color.r, path.fill.color.g, path.fill.color.b, path.fill.color.a);
+            #endif
+        } else {
+            #ifdef ESP_PLATFORM
+            ESP_LOGI(GAUGE_TAG, "Path %d: STROKED RGBA(%d,%d,%d,%d) width=%.1f", 
+                     (int)i, path.stroke.color.r, path.stroke.color.g, path.stroke.color.b, path.stroke.color.a,
+                     (double)path.stroke.width);
+            #endif
         }
         
         // Flatten PathCommands to points for rendering
