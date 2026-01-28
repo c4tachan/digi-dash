@@ -1,5 +1,14 @@
 idf_component_register(SRCS "main.cpp"
-                       INCLUDE_DIRS "."
+                           "application/application.cpp"
+                           "platform/display/display_driver.cpp"
+                           "subsystems/rendering/render_engine.cpp"
+                           "subsystems/storage/storage_manager.cpp"
+                       INCLUDE_DIRS "." 
+                                    "application"
+                                    "platform"
+                                    "platform/display"
+                                    "subsystems/rendering"
+                                    "subsystems/storage"
                        REQUIRES freertos esp_hw_support esp_system vfs spiffs esp_lcd esp_timer)
 
 # Get the firmware CMakeLists location
@@ -16,6 +25,11 @@ target_include_directories(${COMPONENT_LIB} PUBLIC "${FIRMWARE_ENGINE_DIR}/inclu
 
 # Configure C++ standard
 target_compile_features(${COMPONENT_LIB} PRIVATE cxx_std_17)
+
+# Platform configuration - set QEMU target flag
+if(DEFINED CONFIG_DIGI_DASH_TARGET_QEMU)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE CONFIG_DIGI_DASH_TARGET_QEMU)
+endif()
 
 # Link ThorVG if available
 find_package(thorvg CONFIG)
