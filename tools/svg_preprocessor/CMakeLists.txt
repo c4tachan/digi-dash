@@ -4,23 +4,34 @@ project(svg_preprocessor CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Look for local ThorVG installation first
-set(THORVG_ROOT "/home/catachan/projects/thorvg" CACHE PATH "ThorVG installation directory")
+# Look for ThorVG installation
+if(NOT DEFINED THORVG_ROOT)
+    set(THORVG_ROOT "$ENV{HOME}/thorvg/install" CACHE PATH "ThorVG installation directory")
+endif()
 
-# Try to find ThorVG
-if(EXISTS "${THORVG_ROOT}/inc/thorvg.h")
-    message(STATUS "Found local ThorVG at ${THORVG_ROOT}")
-    set(THORVG_INCLUDE_DIR "${THORVG_ROOT}/inc")
-    set(THORVG_LIB_DIR "${THORVG_ROOT}/builddir/src")
+# Try installed ThorVG first
+if(EXISTS "${THORVG_ROOT}/include/thorvg.h")
+    message(STATUS "Found ThorVG installation at ${THORVG_ROOT}")
+    set(THORVG_INCLUDE_DIR "${THORVG_ROOT}/include")
     
-    # Create an imported target for ThorVG
-    add_library(ThorVG::ThorVG SHARED IMPORTED)
-    set_target_properties(ThorVG::ThorVG PROPERTIES
-        IMPORTED_LOCATION "${THORVG_LIB_DIR}/libthorvg.so.0.15.16"
-        INTERFACE_INCLUDE_DIRECTORIES "${THORVG_INCLUDE_DIR}"
-    )
-    set(THORVG_FOUND TRUE)
-else()
+    # Find the library in lib or lib/x86_64-linux-gnu
+    if(EXISTS "${THORVG_ROOT}/lib/x86_64-linux-gnu/libthorvg.so")
+        set(THORVG_LIBRARY "${THORVG_ROOT}/lib/x86_64-linux-gnu/libthorvg.so")
+    elseif(EXISTS "${THORVG_ROOT}/lib/libthorvg.so")
+        set(THORVG_LIBRARY "${THORVG_ROOT}/lib/libthorvg.so")
+    endif()
+    
+    if(THORVG_LIBRARY)
+        add_library(ThorVG::ThorVG SHARED IMPORTED)
+        set_target_properties(ThorVG::ThorVG PROPERTIES
+            IMPORTED_LOCATION "${THORVG_LIBRARY}"
+            INTERFACE_INCLUDE_DIRECTORIES "${THORVG_INCLUDE_DIR}"
+        )
+        set(THORVG_FOUND TRUE)
+    endif()
+endif()
+
+if(NOT THORVG_FOUND)
     # Try system-wide installation
     find_package(ThorVG QUIET)
     if(NOT ThorVG_FOUND)

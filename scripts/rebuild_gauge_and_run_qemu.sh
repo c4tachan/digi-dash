@@ -3,7 +3,7 @@
 
 set -e
 
-PROJECT_DIR="/home/catachan/projects/digi-dash"
+PROJECT_DIR="$(pwd)"
 SVG_FILE="${1:-assets/dashboard_tiny.svg}"
 GAUGE_FILE="${SVG_FILE%.*}.gauge"
 
@@ -27,7 +27,7 @@ echo ""
 
 # Step 3: Regenerate spiffs.bin
 echo "🔨 Rebuilding SPIFFS partition..."
-python3 /home/catachan/esp/esp-idf/components/spiffs/spiffsgen.py \
+python3 $HOME/esp/esp-idf/components/spiffs/spiffsgen.py \
   0x120000 firmware/spiffs_image \
   firmware/build/spiffs.bin > /dev/null 2>&1
 echo "   ✅ SPIFFS rebuilt"
