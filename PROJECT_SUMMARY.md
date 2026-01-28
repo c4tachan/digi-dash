@@ -82,7 +82,7 @@ cmake .. && make -j4
 ### ESP32 Firmware (Requires ESP-IDF)
 ```bash
 # One-time setup
-source ~/esp-idf-5.5/export.sh
+source ~/esp/esp-idf/export.sh
 
 # Build
 cd /home/catachan/projects/digi-dash/firmware

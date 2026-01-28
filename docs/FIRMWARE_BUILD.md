@@ -32,12 +32,12 @@ cd esp-idf
 ### 2. Source ESP-IDF in your shell
 
 ```bash
-source ~/esp-idf/esp-idf/export.sh
+source ~/esp/esp-idf/export.sh
 ```
 
 Or add to your `~/.bashrc`:
 ```bash
-alias idf_setup='source ~/esp-idf/esp-idf/export.sh'
+alias idf_setup='source ~/esp/esp-idf/export.sh'
 ```
 
 ### 3. Build the firmware

@@ -13,15 +13,22 @@ This document explains how to build and run the digi-dash firmware in QEMU for t
 ### 1. Install and configure ESP-IDF
 
 ```bash
-# Install ESP-IDF (if not already installed)
+# Install ESP-IDF v5.5.2
 mkdir -p ~/esp
 cd ~/esp
-git clone -b release/v5.5 https://github.com/espressif/esp-idf.git esp-idf-5.5
-cd esp-idf-5.5
-./install.sh
+
+# Download and extract ESP-IDF 5.5.2
+wget https://github.com/espressif/esp-idf/releases/download/v5.5.2/esp-idf-v5.5.2.zip
+python3 -m zipfile -e esp-idf-v5.5.2.zip .
+ln -s esp-idf-v5.5.2 esp-idf
+
+# Install tools for ESP32-S3
+cd esp-idf
+chmod +x tools/*.py tools/*.sh
+bash install.sh esp32s3
 
 # Source the environment (add to ~/.bashrc for permanent setup)
-source ~/esp/esp-idf-5.5/export.sh
+source ~/esp/esp-idf/export.sh
 ```
 
 ### 2. Generate gauge file

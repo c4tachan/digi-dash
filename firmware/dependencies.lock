@@ -12,7 +12,7 @@ dependencies:
   idf:
     source:
       type: idf
-    version: 5.3.1
+    version: 5.5.2
 direct_dependencies:
 - espressif/esp_lcd_qemu_rgb
 manifest_hash: bcc8ac684296b0901aa35bc82a5c011fc40331408067be25314fac228d4ec207

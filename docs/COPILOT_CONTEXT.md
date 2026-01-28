@@ -20,7 +20,7 @@ This repository contains the codebase for a fully customizable automotive digita
 **Development Environment:**
 - Linux (Ubuntu/WSL)
 - ThorVG 0.15.16 at `/home/catachan/projects/thorvg` (built with meson)
-- ESP-IDF 5.5.2 at `~/esp-idf-5.5`
+- ESP-IDF 5.5.2 at `~/esp/esp-idf` (symlink to `~/esp/esp-idf-v5.5.2`)
 - Target: ESP32-S3 with 720x720 display
 
 ---
@@ -294,17 +294,17 @@ make -j4
 ### ESP32-S3 Firmware
 ```bash
 cd /home/catachan/projects/digi-dash/firmware
-source ~/esp-idf-5.5/export.sh
+source ~/esp/esp-idf/export.sh
 idf.py build
 ```
 
 ### QEMU Testing
 ```bash
 cd /home/catachan/projects/digi-dash/firmware
-source ~/esp-idf-5.5/export.sh
+source ~/esp/esp-idf/export.sh
 
 # Create SPIFFS image
-python3 ~/esp-idf-5.5/components/spiffs/spiffsgen.py 1179648 spiffs_image build/spiffs.bin
+python3 ~/esp/esp-idf/components/spiffs/spiffsgen.py 1179648 spiffs_image build/spiffs.bin
 
 # Create complete flash image
 esptool.py --chip=esp32s3 merge_bin --output=build/qemu_flash.bin \

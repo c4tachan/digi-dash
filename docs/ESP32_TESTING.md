@@ -25,7 +25,7 @@ test_app/                       # Test runner application
 
 ```bash
 cd test_app
-. ~/esp-idf-5.5.2/export.sh
+. ~/esp/esp-idf/export.sh
 idf.py build
 idf.py qemu monitor
 ```
@@ -39,7 +39,7 @@ When prompted:
 
 ```bash
 cd test_app
-. ~/esp-idf-5.5.2/export.sh
+. ~/esp/esp-idf/export.sh
 idf.py -p /dev/ttyUSB0 flash monitor
 ```
 

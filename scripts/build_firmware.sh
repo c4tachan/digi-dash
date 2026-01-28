@@ -6,7 +6,7 @@ set -e
 # Check if ESP-IDF is set up
 if [ -z "$IDF_PATH" ]; then
     echo "ESP-IDF not found. Please run:"
-    echo "  source \$HOME/esp-idf-5.5.2/export.sh"
+    echo "  source \$HOME/esp/esp-idf/export.sh"
     exit 1
 fi
 
