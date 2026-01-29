@@ -48,6 +48,12 @@ Copilot should help generate and maintain:
 - C++17 for engine and firmware
 - CMake for native builds
 - ESP-IDF CMake for firmware
+- **SOLID Design Principles:**
+  - **S**ingle Responsibility: Each class has one reason to change (DisplayDriver for LCD, StorageManager for SPIFFS, RenderEngine for rendering coordination)
+  - **O**pen/Closed: Use abstract interfaces (TileRenderer, PlatformDisplay) to extend functionality without modifying existing code
+  - **L**iskov Substitution: DisplayDriver implements PlatformDisplay interface for proper polymorphic substitution
+  - **I**nterface Segregation: Platform-specific interfaces are focused (platform_display.h, platform_storage.h, platform_input.h)
+  - **D**ependency Inversion: RenderEngine depends on TileRenderer abstraction, not concrete TileHeightRenderer; Application uses unique_ptr for dependency injection
 - Modular, reusable components
 - No NanoSVG (replaced with ThorVG)
 
