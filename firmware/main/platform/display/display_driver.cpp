@@ -85,4 +85,34 @@ void DisplayDriver::refresh() {
     esp_lcd_rgb_qemu_refresh(panel_handle_);
 }
 
+void DisplayDriver::clear(uint32_t color) {
+    if (!initialized_) {
+        ESP_LOGE(TAG, "Display not initialized");
+        return;
+    }
+
+    // Convert 0xRRGGBB color to RGB565
+    uint8_t r = (color >> 16) & 0xFF;
+    uint8_t g = (color >> 8) & 0xFF;
+    uint8_t b = color & 0xFF;
+    uint16_t rgb565 = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+
+    size_t row_bytes = width_ * sizeof(uint16_t);
+    uint16_t* row = (uint16_t*)malloc(row_bytes);
+    if (!row) {
+        ESP_LOGE(TAG, "Failed to allocate row buffer for clear");
+        return;
+    }
+
+    for (uint32_t i = 0; i < width_; ++i) {
+        row[i] = rgb565;
+    }
+
+    for (uint32_t y = 0; y < height_; ++y) {
+        esp_lcd_panel_draw_bitmap(panel_handle_, 0, y, width_, y + 1, row);
+    }
+
+    free(row);
+}
+
 } // namespace digidash

@@ -44,6 +44,16 @@ Copilot should help generate and maintain:
 5. SDL2-based Linux simulator (no LVGL currently)
 6. Python spiffsgen.py for filesystem image creation
 
+**Required Build/Run Scripts (must remain working):**
+- [scripts/build_preprocessor.sh](scripts/build_preprocessor.sh) — build svg_preprocessor
+- [scripts/run_preprocessor.sh](scripts/run_preprocessor.sh) — run svg_preprocessor
+- [scripts/build_pc_simulator.sh](scripts/build_pc_simulator.sh) — build PC simulator
+- [scripts/run_pc_simulator.sh](scripts/run_pc_simulator.sh) — run PC simulator
+- [scripts/build_qemu_firmware.sh](scripts/build_qemu_firmware.sh) — build QEMU firmware
+- [scripts/run_qemu_firmware.sh](scripts/run_qemu_firmware.sh) — run QEMU firmware
+- [scripts/build_qualia_firmware.sh](scripts/build_qualia_firmware.sh) — build Qualia firmware
+- [scripts/run_qualia_firmware.sh](scripts/run_qualia_firmware.sh) — flash/run Qualia firmware
+
 **Code Preferences:**
 - C++17 for engine and firmware
 - CMake for native builds
