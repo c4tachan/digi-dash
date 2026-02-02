@@ -8,6 +8,32 @@
 
 Digi-Dash is an automotive dashboard display system designed for embedded systems (ESP32-S3) that interfaces with vehicle OBD-II (On-Board Diagnostics) systems to display real-time engine and vehicle data on a TFT LCD display.
 
+## Development & Build Requirements
+
+This project targets two primary execution environments: the Linux desktop simulator (SDL2) and ESP32-S3 firmware (ESP-IDF). The following lists the tools and packages developers need to build, run, and test the project.
+
+- **Supported host OS:** Linux (Debian/Ubuntu tested). macOS and Windows may work but are not covered here.
+- **Minimum tools:** `git`, `cmake`, `ninja-build`, `gcc`/`g++`, `python3` (3.8+), `pip`.
+- **ESP-IDF:** Install Espressif's ESP-IDF (documented in `docs/FIRMWARE_BUILD.md`). Tested with ESP-IDF v5.x (5.5.2 recommended). Set `IDF_PATH` per ESP-IDF instructions and install the xtensa toolchain.
+- **QEMU for ESP32:** The project requires an Xtensa-capable QEMU binary (often provided by Espressif's qemu-esp fork). The scripts expect `qemu-system-xtensa` on PATH or `~/qemu-esp-develop/build/qemu-system-xtensa`.
+- **SDL2 (Simulator):** Install development headers for SDL2 to build the desktop simulator (`libsdl2-dev`, `libsdl2-image-dev`).
+- **SPIFFS tools:** The `spiffsgen.py` helper from ESP-IDF is used to produce SPIFFS images for QEMU. It is available at `$IDF_PATH/components/spiffs/spiffsgen.py`.
+- **Unit tests:** The repository currently contains lightweight unit tests (no external Python deps). For expanded testing we recommend installing a C++ test framework such as GoogleTest or Catch2 (optional).
+
+Quick install (Debian/Ubuntu):
+
+```bash
+sudo apt update
+sudo apt install -y git build-essential cmake ninja-build python3 python3-pip libsdl2-dev libsdl2-image-dev
+# QEMU/XTENSA is typically built from Espressif's fork; follow docs/QEMU_SIMULATOR.md for build steps.
+```
+
+Notes:
+- Ensure `IDF_PATH` is exported before running scripts that call `$IDF_PATH/components/spiffs/spiffsgen.py`.
+- To run the firmware in QEMU with a visible window set `WINDOW=1` when using `scripts/run_qemu_firmware.sh`.
+- Unit tests can be built and run with `./scripts/run_unit_tests.sh` (Linux desktop).
+
+
 ## 2. Functional Requirements
 
 ### 2.1 Data Acquisition
