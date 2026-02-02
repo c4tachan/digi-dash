@@ -3,6 +3,7 @@
 #include "tile_renderer.h"
 #include "digidash/gauge_scene.h"
 #include <memory>
+#include <functional>
 #include <cstdint>
 
 namespace digidash {
@@ -26,6 +27,9 @@ public:
     void render_frame() override;
     uint32_t get_frame_count() const override { return frame_count_; }
 
+    // Test hook: provide a function to render into the RGBA tile buffer for tests
+    void set_test_render_callback(std::function<void(uint8_t* target, int width, int height, int stride, int y_offset)> cb) { test_render_cb_ = std::move(cb); }
+
 private:
     void convert_rgba_to_rgb565(const uint8_t* rgba_buffer, uint16_t* rgb565_buffer, size_t pixel_count);
 
@@ -36,6 +40,7 @@ private:
     std::unique_ptr<GaugeScene> gauge_scene_;
     uint8_t* rgba_tile_buffer_;
     uint16_t* rgb565_tile_buffer_;
+    std::function<void(uint8_t* target, int width, int height, int stride, int y_offset)> test_render_cb_;
 
     uint32_t frame_count_;
     bool initialized_;

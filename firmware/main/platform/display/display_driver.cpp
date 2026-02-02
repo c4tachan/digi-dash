@@ -3,6 +3,7 @@
 #include "esp_lcd_qemu_rgb.h"
 #include "soc/syscon_reg.h"
 #include "soc/soc.h"
+#include <cstdlib>
 
 static const char* TAG = "DisplayDriver";
 

@@ -4,6 +4,19 @@
 #include "esp_log.h"
 #include "esp_heap_caps.h"
 #include <cstring>
+#include <functional>
+#include <cstdlib>
+
+// Provide fallbacks for ESP-IDF heap helpers when building tests on host
+#ifndef MALLOC_CAP_8BIT
+#define MALLOC_CAP_8BIT 0
+#endif
+#ifndef MALLOC_CAP_INTERNAL
+#define MALLOC_CAP_INTERNAL 0
+#endif
+#ifndef heap_caps_malloc
+#define heap_caps_malloc(sz, caps) malloc(sz)
+#endif
 
 static const char* TAG = "TileHeightRenderer";
 
@@ -93,7 +106,7 @@ bool TileHeightRenderer::load_gauge(const uint8_t* data, size_t size) {
 }
 
 void TileHeightRenderer::render_frame() {
-    if (!initialized_ || !gauge_scene_) {
+    if (!initialized_ || (!gauge_scene_ && !test_render_cb_)) {
         return;
     }
 
@@ -107,9 +120,13 @@ void TileHeightRenderer::render_frame() {
         
         // Clear RGBA tile buffer
         std::memset(rgba_tile_buffer_, 0, width * tile_h * 4);
-        
+
         // Render this tile
-        gauge_scene_->render(rgba_tile_buffer_, width, tile_h, width * 4, tile_y);
+        if (gauge_scene_) {
+            gauge_scene_->render(rgba_tile_buffer_, width, tile_h, width * 4, tile_y);
+        } else if (test_render_cb_) {
+            test_render_cb_(rgba_tile_buffer_, width, tile_h, width * 4, tile_y);
+        }
         
         // Convert RGBA to RGB565
         convert_rgba_to_rgb565(rgba_tile_buffer_, rgb565_tile_buffer_, width * tile_h);
@@ -125,13 +142,10 @@ void TileHeightRenderer::render_frame() {
     }
 }
 
+#include "digidash/color_utils.h"
+
 void TileHeightRenderer::convert_rgba_to_rgb565(const uint8_t* rgba_buffer, uint16_t* rgb565_buffer, size_t pixel_count) {
-    for (size_t i = 0; i < pixel_count; i++) {
-        uint8_t r = rgba_buffer[i * 4 + 0];
-        uint8_t g = rgba_buffer[i * 4 + 1];
-        uint8_t b = rgba_buffer[i * 4 + 2];
-        rgb565_buffer[i] = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
-    }
+    digidash::convert_rgba_buffer_to_rgb565(rgba_buffer, rgb565_buffer, pixel_count);
 }
 
 } // namespace digidash
