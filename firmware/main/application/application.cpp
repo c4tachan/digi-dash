@@ -2,6 +2,7 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include <cstring>
 
 static const char* TAG = "Application";
 
@@ -27,6 +28,51 @@ Application::Application()
 }
 
 Application::~Application() {
+}
+
+void Application::display_hello_world() {
+    ESP_LOGI(TAG, "Displaying 'Hello World'...");
+    
+    // Allocate RGBA buffer for full display
+    size_t buffer_size = DISPLAY_WIDTH * DISPLAY_HEIGHT * 4;
+    uint8_t* rgba_buffer = (uint8_t*)malloc(buffer_size);
+    if (!rgba_buffer) {
+        ESP_LOGE(TAG, "Failed to allocate buffer for Hello World");
+        return;
+    }
+    
+    // Clear buffer to black
+    std::memset(rgba_buffer, 0, buffer_size);
+    
+    // Draw "Hello World" text in white, centered
+    TextRenderer::draw_text("Hello World",
+                           DISPLAY_WIDTH / 2 - 32,  // Center X (64 pixels wide for "Hello World")
+                           DISPLAY_HEIGHT / 2 - 4,   // Center Y
+                           rgba_buffer,
+                           DISPLAY_WIDTH, DISPLAY_HEIGHT,
+                           DISPLAY_WIDTH * 4,
+                           255, 255, 255);  // White color
+    
+    // Convert RGBA to RGB565 and display
+    size_t rgb565_buffer_size = DISPLAY_WIDTH * DISPLAY_HEIGHT * 2;
+    uint16_t* rgb565_buffer = (uint16_t*)malloc(rgb565_buffer_size);
+    if (rgb565_buffer) {
+        // Convert RGBA to RGB565
+        for (size_t i = 0; i < DISPLAY_WIDTH * DISPLAY_HEIGHT; ++i) {
+            uint8_t r = rgba_buffer[i * 4 + 0];
+            uint8_t g = rgba_buffer[i * 4 + 1];
+            uint8_t b = rgba_buffer[i * 4 + 2];
+            rgb565_buffer[i] = static_cast<uint16_t>(((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3));
+        }
+        
+        // Display on screen
+        display_->draw_bitmap(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT, rgb565_buffer);
+        
+        free(rgb565_buffer);
+    }
+    
+    free(rgba_buffer);
+    ESP_LOGI(TAG, "Hello World displayed!");
 }
 
 bool Application::initialize() {
@@ -86,6 +132,9 @@ void Application::run() {
     }
 
     ESP_LOGI(TAG, "Starting main render loop...");
+    
+    // Display "Hello World" on startup
+    display_hello_world();
 
     while (true) {
         renderer_->render_frame();
