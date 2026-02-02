@@ -44,6 +44,18 @@ test_find_thorvg*
 test_results/
 *.test
 
+# Coverage data and reports
+*.gcda
+*.gcno
+*.gcov
+coverage.info
+coverage_filtered.info
+coverage_new.info
+coverage_new_filtered.info
+coverage_html/
+simulator/build_cov/
+simulator/build_test/
+
 # Backup files
 *.bak
 *.backup

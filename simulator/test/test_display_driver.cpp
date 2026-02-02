@@ -50,3 +50,41 @@ TEST_CASE("DisplayDriver draw_bitmap writes given area") {
     REQUIRE(fb[2 * W + 1] == block[2]);
     REQUIRE(fb[2 * W + 2] == block[3]);
 }
+
+TEST_CASE("DisplayDriver draw_bitmap ignores call when not initialized") {
+    DisplayDriver drv(10, 10);
+    // Don't initialize; stub framebuffer should not change
+    esp_stub_clear_framebuffer();
+    uint16_t dummy = 0xFFFF;
+    drv.draw_bitmap(0, 0, 1, 1, &dummy);
+    const auto& fb = esp_stub_get_framebuffer();
+    REQUIRE(fb[0] == 0);
+}
+
+TEST_CASE("DisplayDriver refresh ignores call when not initialized") {
+    DisplayDriver drv(10, 10);
+    // Calling refresh without initialize should be safe (no crash)
+    drv.refresh();
+    REQUIRE(true); // If we got here, no crash occurred
+}
+
+TEST_CASE("DisplayDriver clear ignores call when not initialized") {
+    DisplayDriver drv(10, 10);
+    // Calling clear without initialize should be safe
+    drv.clear(0xFF0000);
+    REQUIRE(true); // If we got here, no crash occurred
+}
+
+TEST_CASE("DisplayDriver initialize returns true if already initialized") {
+    DisplayDriver drv(10, 10);
+    REQUIRE(drv.initialize() == true);
+    REQUIRE(drv.initialize() == true); // Second call should also succeed
+}
+
+TEST_CASE("DisplayDriver getters work after initialization") {
+    DisplayDriver drv(64, 32);
+    REQUIRE(drv.initialize() == true);
+    REQUIRE(drv.get_width() == 64);
+    REQUIRE(drv.get_height() == 32);
+    REQUIRE(drv.get_stride() == 64 * 2); // RGB565 is 2 bytes per pixel
+}
