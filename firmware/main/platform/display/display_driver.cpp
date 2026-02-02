@@ -234,8 +234,13 @@ bool DisplayDriver::initialize() {
     // Data width and frame buffer settings
     panel_config.data_width = 16;  // RGB565 mode
     panel_config.bits_per_pixel = 16;
-    panel_config.num_fbs = 0;  // No internal framebuffer - use bounce buffer only
-    panel_config.bounce_buffer_size_px = 2 * QUALIA_LCD_H_RES;  // Bounce buffer in internal RAM (2 lines only, ~2.8KB)
+    panel_config.num_fbs = 0;  // No internal framebuffer
+    // WORKAROUND FOR ESP-IDF v5.5.2 BUG:
+    // Setting bounce_buffer_size_px > 0 causes esp_lcd_new_rgb_panel() to allocate
+    // internal DMA buffers. On ESP32-S3, internal DMA-capable RAM is very limited
+    // and fragmented, causing heap_calloc() to fail with LoadProhibited exception.
+    // We manually stream the framebuffer in chunks instead (see unlock_and_update()).
+    panel_config.bounce_buffer_size_px = 0;
     
     // GPIO assignments
     panel_config.hsync_gpio_num = QUALIA_PIN_NUM_HSYNC;
@@ -261,11 +266,17 @@ bool DisplayDriver::initialize() {
     panel_config.data_gpio_nums[14] = QUALIA_PIN_NUM_DATA14;  // R2
     panel_config.data_gpio_nums[15] = QUALIA_PIN_NUM_DATA15;  // R3
     
-    // No framebuffer mode - use bounce buffer only to avoid PSRAM allocation issues
+    // No framebuffer mode - manual chunked streaming
     panel_config.flags.fb_in_psram = 0;
-    panel_config.flags.no_fb = 1;  // Critical: tell driver not to allocate any framebuffer
+    panel_config.flags.no_fb = 1;  // Tell driver not to allocate any framebuffer
     
-    ESP_LOGI(TAG, "Creating RGB panel (no-FB mode with bounce buffer)");
+    // Diagnostic: check internal heap before calling driver
+    ESP_LOGI(TAG, "Internal DMA largest free block: %u bytes",
+             heap_caps_get_largest_free_block(MALLOC_CAP_DMA));
+    ESP_LOGI(TAG, "Internal RAM largest free block: %u bytes",
+             heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+    
+    ESP_LOGI(TAG, "Creating RGB panel (no-FB, no-bounce-buffer mode)");
     esp_err_t rgb_ret = esp_lcd_new_rgb_panel(&panel_config, &panel_handle_);
     if (rgb_ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to create panel: %s", esp_err_to_name(rgb_ret));
@@ -321,9 +332,9 @@ void DisplayDriver::unlock_and_update() {
         return;
     }
     
-    // In no-FB mode with bounce buffer, we need to send the framebuffer data 
-    // to the panel in chunks that fit in the bounce buffer
-    // Our bounce buffer is 10 lines, so send 10 lines at a time
+    // IMPORTANT: RGB panel is running in no-FB, no-bounce-buffer mode (see initialize()).
+    // The ESP-IDF driver does NOT allocate internal buffers, so we manually stream
+    // the framebuffer in chunks. This avoids the ESP-IDF v5.5.2 internal heap bug.
     const uint32_t lines_per_chunk = 10;
     const size_t bytes_per_line = width_ * 2;  // RGB565 = 2 bytes per pixel
     
