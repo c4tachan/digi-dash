@@ -1,6 +1,7 @@
 idf_component_register(SRCS "main.cpp"
                            "application/application.cpp"
                            "platform/display/display_driver.cpp"
+                           "platform/display/nv3052c_driver.cpp"
                            "subsystems/rendering/render_engine.cpp"
                            "subsystems/rendering/text_renderer.cpp"
                            "subsystems/rendering/tile_height_renderer.cpp"
@@ -11,7 +12,7 @@ idf_component_register(SRCS "main.cpp"
                                     "platform/display"
                                     "subsystems/rendering"
                                     "subsystems/storage"
-                       REQUIRES freertos esp_hw_support esp_system vfs spiffs esp_lcd esp_timer)
+                       REQUIRES freertos esp_hw_support esp_system vfs spiffs esp_lcd esp_timer driver)
 
 # Get the firmware CMakeLists location
 set(FIRMWARE_ENGINE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../engine")

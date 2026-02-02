@@ -31,7 +31,28 @@ Application::~Application() {
 }
 
 void Application::display_hello_world() {
-    ESP_LOGI(TAG, "Displaying 'Hello World'...");
+    ESP_LOGI(TAG, "========================================");
+    ESP_LOGI(TAG, "Running test patterns BEFORE LVGL...");
+    ESP_LOGI(TAG, "========================================");
+    
+    // Run solid color test patterns
+    ESP_LOGI(TAG, "Starting RED test pattern...");
+    display_->test_pattern_solid_red();
+    
+    ESP_LOGI(TAG, "Starting GREEN test pattern...");
+    display_->test_pattern_solid_green();
+    
+    ESP_LOGI(TAG, "Starting BLUE test pattern...");
+    display_->test_pattern_solid_blue();
+    
+    ESP_LOGI(TAG, "========================================");
+    ESP_LOGI(TAG, "Test patterns complete!");
+    ESP_LOGI(TAG, "If you see RED/GREEN/BLUE on the display,");
+    ESP_LOGI(TAG, "the display is working correctly!");
+    ESP_LOGI(TAG, "========================================");
+    
+    // Fill screen with RGB test pattern
+    ESP_LOGI(TAG, "Displaying final RGB test pattern...");
     
     // Allocate RGB565 buffer directly
     size_t rgb565_buffer_size = DISPLAY_WIDTH * DISPLAY_HEIGHT * 2;
@@ -70,13 +91,13 @@ void Application::display_hello_world() {
         rgb565_buffer[y * DISPLAY_WIDTH + (DISPLAY_WIDTH - 1)] = 0xFFFF;  // Right column white
     }
     
-    ESP_LOGI(TAG, "Drawing test pattern: RED/GREEN/BLUE with white border");
+    ESP_LOGI(TAG, "Drawing final test pattern: RED/GREEN/BLUE with white border");
     
     // Display on screen
     display_->draw_bitmap(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT, rgb565_buffer);
     
     free(rgb565_buffer);
-    ESP_LOGI(TAG, "Test pattern displayed!");
+    ESP_LOGI(TAG, "Final test pattern displayed!");
 }
 
 bool Application::initialize() {

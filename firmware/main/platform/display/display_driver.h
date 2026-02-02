@@ -17,19 +17,31 @@ public:
     int get_width() const override { return width_; }
     int get_height() const override { return height_; }
     int get_stride() const override { return width_ * 2; } // RGB565: 2 bytes per pixel
-    uint8_t* lock_framebuffer() override { return nullptr; } // QEMU RGB uses draw_bitmap
-    void unlock_and_update() override {} // QEMU RGB uses draw_bitmap
+    uint8_t* lock_framebuffer() override { return framebuffer_; } // Return manual framebuffer
+    void unlock_and_update() override; // Trigger DMA transfer in no-FB mode
     void clear(uint32_t color) override;
     
     // ESP-IDF specific methods
     void draw_bitmap(uint32_t x_start, uint32_t y_start, uint32_t x_end, uint32_t y_end, const void* color_data);
     void refresh();
     
+    // Test pattern methods (verify display is working before LVGL)
+    void test_pattern_solid_red();
+    void test_pattern_solid_green();
+    void test_pattern_solid_blue();
+    
 private:
     uint32_t width_;
     uint32_t height_;
     esp_lcd_panel_handle_t panel_handle_;
+    esp_lcd_panel_io_handle_t panel_io_handle_;
     bool initialized_;
+    uint8_t* framebuffer_;  // Manual framebuffer allocation for no-FB mode
+    
+    // Helper functions
+    bool init_backlight();
+    bool enable_backlight();
+    bool allocate_framebuffer();
 };
 
 } // namespace digidash
