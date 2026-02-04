@@ -3,60 +3,60 @@
 // Adafruit Qualia ESP32-S3 RGB666 Display Configuration
 // Based on https://learn.adafruit.com/adafruit-qualia-esp32-s3-for-rgb666-displays
 // Panel: HD40015C 0-Y (NV3052C controller), 720x720 RGB666 TTL
+// Configuration matches working esprgbqualia2 example
 
-#define QUALIA_PIN_NUM_HSYNC    (39)
-#define QUALIA_PIN_NUM_VSYNC    (40)
-#define QUALIA_PIN_NUM_DE       (41)
-#define QUALIA_PIN_NUM_PCLK     (42)
-#define QUALIA_PIN_NUM_BL       (2)   // Backlight enable
+// I2C pins for PCA9554 GPIO expander (controls TFT initialization)
+#define QUALIA_PIN_NUM_I2C_SDA  (8)
+#define QUALIA_PIN_NUM_I2C_SCL  (18)
 
-// SPI pins for NV3052C controller initialization
-#define QUALIA_PIN_NUM_LCD_CS   (44)  // LCD chip select
-#define QUALIA_PIN_NUM_LCD_DC   (43)  // Data/Command select
-#define QUALIA_PIN_NUM_LCD_SCK  (36)  // SPI clock
-#define QUALIA_PIN_NUM_LCD_MOSI (35)  // SPI MOSI
-#define QUALIA_PIN_NUM_LCD_RST  (0)   // LCD reset (shared with BOOT button)
+// RGB interface timing signals
+#define QUALIA_PIN_NUM_HSYNC    (41)
+#define QUALIA_PIN_NUM_VSYNC    (42)
+#define QUALIA_PIN_NUM_DE       (2)
+#define QUALIA_PIN_NUM_PCLK     (1)
 
-// RGB Data pins (RGB666 uses 18 bits: R5-R0, G5-G0, B5-B0)
-// For RGB666, we use 18 data pins but can use 16-pin mode with reduced color depth
-// Using 16-pin RGB565 mode: R5-R0, G5-G0, B5-B0 (but only 5 bits per color in 16-bit mode)
-#define QUALIA_PIN_NUM_DATA0    (8)   // B0
-#define QUALIA_PIN_NUM_DATA1    (3)   // B1
-#define QUALIA_PIN_NUM_DATA2    (46)  // B2
-#define QUALIA_PIN_NUM_DATA3    (9)   // B3
-#define QUALIA_PIN_NUM_DATA4    (1)   // B4
-#define QUALIA_PIN_NUM_DATA5    (5)   // B5
-#define QUALIA_PIN_NUM_DATA6    (6)   // G0
-#define QUALIA_PIN_NUM_DATA7    (7)   // G1
-#define QUALIA_PIN_NUM_DATA8    (15)  // G2
-#define QUALIA_PIN_NUM_DATA9    (16)  // G3
-#define QUALIA_PIN_NUM_DATA10   (4)   // G4
-#define QUALIA_PIN_NUM_DATA11   (45)  // G5
-#define QUALIA_PIN_NUM_DATA12   (48)  // R0
-#define QUALIA_PIN_NUM_DATA13   (47)  // R1
-#define QUALIA_PIN_NUM_DATA14   (21)  // R2
-#define QUALIA_PIN_NUM_DATA15   (14)  // R3
-#define QUALIA_PIN_NUM_DATA16   (11)  // R4 (for RGB666 mode)
-#define QUALIA_PIN_NUM_DATA17   (10)  // R5 (for RGB666 mode)
+// NOTE: NV3052C controller initialization (reset, CS, SCK, MOSI) is handled 
+// via PCA9554 I2C GPIO expander (address 0x3F), not direct GPIO
+// Backlight is also controlled via PCA9554 pin 4
 
-// Display timings for 720x720 NV3052C displays (DE-only mode)
-// These timings are optimized for the NV3052C controller
+// RGB Data pins - Using RGB565 mode (16 bits)
+// Pin mapping from working example (data_gpio_nums array order):
+// B1-B5 (5 bits blue, B0 unused), G0-G5 (6 bits green), R1-R5 (5 bits red, R0 unused)
+#define QUALIA_PIN_NUM_DATA0    (40)  // B1
+#define QUALIA_PIN_NUM_DATA1    (39)  // B2
+#define QUALIA_PIN_NUM_DATA2    (38)  // B3
+#define QUALIA_PIN_NUM_DATA3    (0)   // B4
+#define QUALIA_PIN_NUM_DATA4    (45)  // B5
+#define QUALIA_PIN_NUM_DATA5    (48)  // G0
+#define QUALIA_PIN_NUM_DATA6    (47)  // G1
+#define QUALIA_PIN_NUM_DATA7    (21)  // G2
+#define QUALIA_PIN_NUM_DATA8    (14)  // G3
+#define QUALIA_PIN_NUM_DATA9    (13)  // G4
+#define QUALIA_PIN_NUM_DATA10   (12)  // G5
+#define QUALIA_PIN_NUM_DATA11   (11)  // R1
+#define QUALIA_PIN_NUM_DATA12   (10)  // R2
+#define QUALIA_PIN_NUM_DATA13   (9)   // R3
+#define QUALIA_PIN_NUM_DATA14   (46)  // R4
+#define QUALIA_PIN_NUM_DATA15   (3)   // R5
+
+// Display timings for 720x720 NV3052C displays
+// Timings from working esprgbqualia2 example
 #define QUALIA_LCD_H_RES        (720)
 #define QUALIA_LCD_V_RES        (720)
-#define QUALIA_LCD_PIXEL_CLOCK  (16000000)  // 16MHz pixel clock
+#define QUALIA_LCD_PIXEL_CLOCK  (12000000)  // 12MHz pixel clock (from working example)
 
-// Horizontal timing (DE mode - HSYNC not required but configure anyway)
-#define QUALIA_LCD_HSYNC_BACK_PORCH    (20)
-#define QUALIA_LCD_HSYNC_FRONT_PORCH   (20)
-#define QUALIA_LCD_HSYNC_PULSE_WIDTH   (10)
+// Horizontal timing (from working example)
+#define QUALIA_LCD_HSYNC_BACK_PORCH    (44)
+#define QUALIA_LCD_HSYNC_FRONT_PORCH   (46)
+#define QUALIA_LCD_HSYNC_PULSE_WIDTH   (2)
 
-// Vertical timing (DE mode - VSYNC not required but configure anyway)
-#define QUALIA_LCD_VSYNC_BACK_PORCH    (20)
-#define QUALIA_LCD_VSYNC_FRONT_PORCH   (20)
-#define QUALIA_LCD_VSYNC_PULSE_WIDTH   (10)
+// Vertical timing (from working example)
+#define QUALIA_LCD_VSYNC_BACK_PORCH    (16)
+#define QUALIA_LCD_VSYNC_FRONT_PORCH   (50)
+#define QUALIA_LCD_VSYNC_PULSE_WIDTH   (16)
 
-// Polarity settings
-#define QUALIA_LCD_HSYNC_POLARITY      (0)  // Active low (not used in DE mode)
-#define QUALIA_LCD_VSYNC_POLARITY      (0)  // Active low (not used in DE mode)
-#define QUALIA_LCD_DE_POLARITY         (1)  // Active high (DE mode only)
-#define QUALIA_LCD_PCLK_ACTIVE_NEG     (0)  // Data on rising edge
+// Polarity settings (from working example)
+#define QUALIA_LCD_HSYNC_POLARITY      (1)  // hsync_idle_low = true
+#define QUALIA_LCD_VSYNC_POLARITY      (1)  // vsync_idle_low = true  
+#define QUALIA_LCD_DE_POLARITY         (0)  // de_idle_high = false
+#define QUALIA_LCD_PCLK_ACTIVE_NEG     (0)  // pclk_active_neg = false
