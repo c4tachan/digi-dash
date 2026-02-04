@@ -45,8 +45,8 @@
 #define QUALIA_LCD_V_RES        (720)
 #define QUALIA_LCD_PIXEL_CLOCK  (12000000)  // 12MHz pixel clock (from working example)
 
-// Horizontal timing (from working example)
-#define QUALIA_LCD_HSYNC_BACK_PORCH    (44)
+// Horizontal timing (adjusted for 5mm left shift)
+#define QUALIA_LCD_HSYNC_BACK_PORCH    (90)
 #define QUALIA_LCD_HSYNC_FRONT_PORCH   (46)
 #define QUALIA_LCD_HSYNC_PULSE_WIDTH   (2)
 
