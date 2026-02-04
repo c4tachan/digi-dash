@@ -3,6 +3,8 @@
 #include "platform/display/display_driver.h"
 #include "esp_log.h"
 #include "esp_heap_caps.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include <cstring>
 #include <functional>
 #include <cstdlib>
@@ -133,6 +135,9 @@ void TileHeightRenderer::render_frame() {
         
         // Send tile to display
         display_.draw_bitmap(0, tile_y, width, tile_y + tile_h, rgb565_tile_buffer_);
+        
+        // Reset watchdog to prevent timeout during long rendering
+        vTaskDelay(1);
     }
     
     frame_count_++;
