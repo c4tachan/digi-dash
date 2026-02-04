@@ -4,7 +4,7 @@
 set -e
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BUILD_DIR="${PROJECT_DIR}/simulator/build"
+BUILD_DIR="${PROJECT_DIR}/build"
 
 echo "Cleaning previous build..."
 rm -rf "$BUILD_DIR"
@@ -12,7 +12,7 @@ rm -rf "$BUILD_DIR"
 echo "Creating build directory..."
 mkdir -p "$BUILD_DIR"
 
-echo "Running CMake..."
+echo "Running CMake from project root..."
 cd "$BUILD_DIR"
 cmake -DCMAKE_BUILD_TYPE=Debug ..
 
