@@ -260,7 +260,25 @@ void DisplayDriver::draw_bitmap(uint32_t x_start, uint32_t y_start, uint32_t x_e
         return;
     }
     
-    esp_lcd_panel_draw_bitmap(panel_handle_, x_start, y_start, x_end, y_end, color_data);
+    // Write directly to both framebuffers for double-buffering
+    // This avoids coordinate issues with esp_lcd_panel_draw_bitmap
+    uint16_t* fb0 = static_cast<uint16_t*>(framebuffer0_);
+    uint16_t* fb1 = static_cast<uint16_t*>(framebuffer1_);
+    const uint16_t* src = static_cast<const uint16_t*>(color_data);
+    
+    uint32_t tile_width = x_end - x_start;
+    uint32_t tile_height = y_end - y_start;
+    
+    // Copy tile data row by row to both framebuffers
+    for (uint32_t row = 0; row < tile_height; row++) {
+        uint32_t y = y_start + row;
+        uint32_t fb_offset = y * width_ + x_start;
+        uint32_t src_offset = row * tile_width;
+        
+        // Copy to both framebuffers
+        std::memcpy(&fb0[fb_offset], &src[src_offset], tile_width * sizeof(uint16_t));
+        std::memcpy(&fb1[fb_offset], &src[src_offset], tile_width * sizeof(uint16_t));
+    }
 }
 
 void DisplayDriver::refresh() {
