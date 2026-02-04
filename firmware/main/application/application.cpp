@@ -165,10 +165,9 @@ void Application::run() {
 
     ESP_LOGI(TAG, "Starting main loop...");
     
-    // Show test patterns first to verify display
-    ESP_LOGI(TAG, "Showing quick test pattern...");
-    display_->test_pattern_solid_red();
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    // Clear to white before rendering gauge
+    display_->clear(0xFFFFFF);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
     
     ESP_LOGI(TAG, "Rendering gauge...");
     
