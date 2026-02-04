@@ -1,2 +1,1 @@
-dependencies:
-  espressif/esp_lcd_qemu_rgb: "^1.0.0"
+# No external dependencies needed - esp_lcd is part of ESP-IDF

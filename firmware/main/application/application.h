@@ -4,6 +4,7 @@
 #include "platform/display/display_driver.h"
 #include "subsystems/storage/storage_manager.h"
 #include "subsystems/rendering/render_engine.h"
+#include "subsystems/rendering/text_renderer.h"
 
 namespace digidash {
 
@@ -16,6 +17,7 @@ public:
     void run();
     
 private:
+    void display_hello_world();
     std::unique_ptr<DisplayDriver> display_;
     std::unique_ptr<StorageManager> storage_;
     std::unique_ptr<RenderEngine> renderer_;
