@@ -45,12 +45,12 @@
 #define QUALIA_LCD_V_RES        (720)
 #define QUALIA_LCD_PIXEL_CLOCK  (10000000)  // 10MHz fallback for stability (reduce shimmer)
 
-// Horizontal timing (match known-good esprgbqualia2 timing)
+// Horizontal timing (known stable values from prior experiments)
 #define QUALIA_LCD_HSYNC_BACK_PORCH    (44)
 #define QUALIA_LCD_HSYNC_FRONT_PORCH   (46)
 #define QUALIA_LCD_HSYNC_PULSE_WIDTH   (2)
 
-// Vertical timing (from working example)
+// Vertical timing (known stable values from prior experiments)
 #define QUALIA_LCD_VSYNC_BACK_PORCH    (16)
 #define QUALIA_LCD_VSYNC_FRONT_PORCH   (50)
 #define QUALIA_LCD_VSYNC_PULSE_WIDTH   (16)

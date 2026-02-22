@@ -46,12 +46,13 @@
        height="275.41376"
        id="rect2" />
   </defs>
-  <circle
+  <rect
      style="fill:#112b00;stroke-width:0.999999"
      id="path1"
-     cx="360"
-     cy="360"
-     r="360" />
+     x="0"
+     y="0"
+     width="720"
+     height="720" />
   <text
      xml:space="preserve"
      style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:205.747px;font-family:Consolas;-inkscape-font-specification:'Consolas, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;writing-mode:lr-tb;direction:ltr;fill:#ffffff;stroke-width:2.1432"
