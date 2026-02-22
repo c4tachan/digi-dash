@@ -263,7 +263,8 @@ void DisplayDriver::draw_bitmap(uint32_t x_start, uint32_t y_start, uint32_t x_e
     // Log any out-of-bounds calls
     if (x_end > width_ || y_end > height_) {
         ESP_LOGW(TAG, "draw_bitmap called with out-of-bounds: x_start=%u, y_start=%u, x_end=%u, y_end=%u (display is %ux%u)",
-                 x_start, y_start, x_end, y_end, width_, height_);
+             (unsigned)x_start, (unsigned)y_start, (unsigned)x_end, (unsigned)y_end,
+             (unsigned)width_, (unsigned)height_);
     }
     
     // Write directly to both framebuffers for double-buffering

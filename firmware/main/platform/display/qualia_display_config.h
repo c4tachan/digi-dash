@@ -43,10 +43,10 @@
 // Timings from working esprgbqualia2 example
 #define QUALIA_LCD_H_RES        (720)
 #define QUALIA_LCD_V_RES        (720)
-#define QUALIA_LCD_PIXEL_CLOCK  (12000000)  // 12MHz pixel clock (from working example)
+#define QUALIA_LCD_PIXEL_CLOCK  (10000000)  // 10MHz fallback for stability (reduce shimmer)
 
-// Horizontal timing (adjusted for 5mm left shift)
-#define QUALIA_LCD_HSYNC_BACK_PORCH    (90)
+// Horizontal timing (match known-good esprgbqualia2 timing)
+#define QUALIA_LCD_HSYNC_BACK_PORCH    (44)
 #define QUALIA_LCD_HSYNC_FRONT_PORCH   (46)
 #define QUALIA_LCD_HSYNC_PULSE_WIDTH   (2)
 
