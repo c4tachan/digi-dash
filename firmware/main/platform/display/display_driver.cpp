@@ -22,7 +22,10 @@ DisplayDriver::DisplayDriver(uint32_t width, uint32_t height)
     , initialized_(false)
     , framebuffer0_(nullptr)
     , framebuffer1_(nullptr)
-    , framebuffer_(nullptr) {
+    , framebuffer2_(nullptr)
+    , framebuffer_(nullptr)
+    , num_framebuffers_(0)
+    , render_fb_index_(0) {
 }
 
 DisplayDriver::~DisplayDriver() {
@@ -120,7 +123,7 @@ bool DisplayDriver::init_rgb_panel() {
         },
         .data_width = 16,  // RGB565 mode
         .bits_per_pixel = 16,
-        .num_fbs = 2,  // Double framebuffer (like working example)
+        .num_fbs = 3,  // Triple framebuffer for smoother producer/consumer decoupling
         .bounce_buffer_size_px = 0,
         .sram_trans_align = 8,
         .psram_trans_align = 64,
@@ -151,12 +154,12 @@ bool DisplayDriver::init_rgb_panel() {
             .disp_active_low = 1,
             .refresh_on_demand = 0,
             .fb_in_psram = 1,      // Framebuffers in PSRAM
-            .double_fb = 1,        // Use double buffering
+            .double_fb = 0,        // Explicitly use num_fbs
             .no_fb = 0,            // Driver manages framebuffers
         },
     };
     
-    ESP_LOGI(TAG, "Creating RGB panel with double framebuffer mode");
+    ESP_LOGI(TAG, "Creating RGB panel with triple framebuffer mode");
     esp_err_t ret = esp_lcd_new_rgb_panel(&panel_config, &panel_handle_);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to create RGB panel: %s", esp_err_to_name(ret));
@@ -164,7 +167,7 @@ bool DisplayDriver::init_rgb_panel() {
     }
     
     // Get framebuffer pointers from driver
-    ret = esp_lcd_rgb_panel_get_frame_buffer(panel_handle_, 2, &framebuffer0_, &framebuffer1_);
+    ret = esp_lcd_rgb_panel_get_frame_buffer(panel_handle_, 3, &framebuffer0_, &framebuffer1_, &framebuffer2_);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to get framebuffer pointers: %s", esp_err_to_name(ret));
         return false;
@@ -172,14 +175,16 @@ bool DisplayDriver::init_rgb_panel() {
     
     ESP_LOGI(TAG, "Framebuffer 0 address: %p", framebuffer0_);
     ESP_LOGI(TAG, "Framebuffer 1 address: %p", framebuffer1_);
+    ESP_LOGI(TAG, "Framebuffer 2 address: %p", framebuffer2_);
     
-    if (!framebuffer0_ || !framebuffer1_) {
+    if (!framebuffer0_ || !framebuffer1_ || !framebuffer2_) {
         ESP_LOGE(TAG, "Invalid framebuffer pointers");
         return false;
     }
     
-    // Set current framebuffer pointer (will flip between them)
-    framebuffer_ = static_cast<uint8_t*>(framebuffer0_);
+    num_framebuffers_ = 3;
+    render_fb_index_ = 1;
+    framebuffer_ = static_cast<uint8_t*>(framebuffer1_);
     
     // Reset and initialize panel
     ESP_LOGI(TAG, "Resetting and initializing RGB panel");
@@ -262,56 +267,107 @@ void DisplayDriver::draw_bitmap(uint32_t x_start, uint32_t y_start, uint32_t x_e
     
     // Log any out-of-bounds calls
     if (x_end > width_ || y_end > height_) {
-        ESP_LOGW(TAG, "draw_bitmap called with out-of-bounds: x_start=%u, y_start=%u, x_end=%u, y_end=%u (display is %ux%u)",
+        ESP_LOGW(TAG, "draw_bitmap called with out-of-bounds: x_start=%" PRIu32 ", y_start=%" PRIu32 ", x_end=%" PRIu32 ", y_end=%" PRIu32 " (display is %" PRIu32 "x%" PRIu32 ")",
                  x_start, y_start, x_end, y_end, width_, height_);
     }
-    
-    // Write directly to both framebuffers for double-buffering
-    uint16_t* fb0 = static_cast<uint16_t*>(framebuffer0_);
-    uint16_t* fb1 = static_cast<uint16_t*>(framebuffer1_);
+
+    if (num_framebuffers_ < 1) {
+        ESP_LOGE(TAG, "No framebuffers available");
+        return;
+    }
+
+    void* render_fb = nullptr;
+    if (render_fb_index_ == 0) {
+        render_fb = framebuffer0_;
+    } else if (render_fb_index_ == 1) {
+        render_fb = framebuffer1_;
+    } else {
+        render_fb = framebuffer2_;
+    }
+
+    uint16_t* dst = static_cast<uint16_t*>(render_fb);
     const uint16_t* src = static_cast<const uint16_t*>(color_data);
-    
-    uint32_t tile_width = x_end - x_start;
-    uint32_t tile_height = y_end - y_start;
-    
-    // Clamp to display bounds to prevent wrapping
+
     if (x_start >= width_ || y_start >= height_) {
         return;  // Completely off screen
     }
-    
-    // Adjust tile dimensions if they extend beyond screen
+
+    uint32_t tile_width = x_end - x_start;
+    uint32_t tile_height = y_end - y_start;
+
     if (x_end > width_) {
         tile_width = width_ - x_start;
     }
     if (y_end > height_) {
         tile_height = height_ - y_start;
     }
-    
-    // Copy tile data row by row to both framebuffers
+
     for (uint32_t row = 0; row < tile_height; row++) {
         uint32_t y = y_start + row;
-        if (y >= height_) break;  // Safety check
-        
+        if (y >= height_) break;
+
         uint32_t fb_offset = y * width_ + x_start;
-        uint32_t src_offset = row * (x_end - x_start);  // Use original width for source
-        
-        // Copy to both framebuffers with bounds check
+        uint32_t src_offset = row * (x_end - x_start);
+
         if (fb_offset + tile_width <= width_ * height_) {
-            std::memcpy(&fb0[fb_offset], &src[src_offset], tile_width * sizeof(uint16_t));
-            std::memcpy(&fb1[fb_offset], &src[src_offset], tile_width * sizeof(uint16_t));
+            std::memcpy(&dst[fb_offset], &src[src_offset], tile_width * sizeof(uint16_t));
         }
+    }
+
+    esp_err_t ret = esp_lcd_panel_draw_bitmap(panel_handle_, x_start, y_start, x_end, y_end, render_fb);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "esp_lcd_panel_draw_bitmap failed: %s", esp_err_to_name(ret));
+        return;
+    }
+
+    render_fb_index_ = (render_fb_index_ + 1) % num_framebuffers_;
+    if (render_fb_index_ == 0) {
+        framebuffer_ = static_cast<uint8_t*>(framebuffer0_);
+    } else if (render_fb_index_ == 1) {
+        framebuffer_ = static_cast<uint8_t*>(framebuffer1_);
+    } else {
+        framebuffer_ = static_cast<uint8_t*>(framebuffer2_);
     }
 }
 
 void DisplayDriver::refresh() {
-    // RGB LCD panel updates automatically via DMA in double-FB mode
-    // No explicit refresh needed
+    // RGB LCD panel updates automatically via DMA in continuous mode
+}
+
+bool DisplayDriver::set_pixel_clock(uint32_t hz) {
+    if (!initialized_ || !panel_handle_) {
+        return false;
+    }
+
+    esp_err_t ret = esp_lcd_rgb_panel_set_pclk(panel_handle_, hz);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to set pixel clock to %u Hz: %s", (unsigned)hz, esp_err_to_name(ret));
+        return false;
+    }
+
+    ESP_LOGI(TAG, "Requested pixel clock change to %u Hz", (unsigned)hz);
+    return true;
 }
 
 void DisplayDriver::unlock_and_update() {
-    // In double-FB mode, the driver automatically handles buffer swapping
-    // We just need to ensure the data is visible (cache flush if needed)
-    // The framebuffer_ pointer always points to the current back buffer
+    if (!initialized_ || !panel_handle_ || !framebuffer_) {
+        return;
+    }
+
+    esp_err_t ret = esp_lcd_panel_draw_bitmap(panel_handle_, 0, 0, width_, height_, framebuffer_);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "unlock_and_update draw failed: %s", esp_err_to_name(ret));
+        return;
+    }
+
+    render_fb_index_ = (render_fb_index_ + 1) % num_framebuffers_;
+    if (render_fb_index_ == 0) {
+        framebuffer_ = static_cast<uint8_t*>(framebuffer0_);
+    } else if (render_fb_index_ == 1) {
+        framebuffer_ = static_cast<uint8_t*>(framebuffer1_);
+    } else {
+        framebuffer_ = static_cast<uint8_t*>(framebuffer2_);
+    }
 }
 
 void DisplayDriver::clear(uint32_t color) {
@@ -326,15 +382,18 @@ void DisplayDriver::clear(uint32_t color) {
     uint8_t b = color & 0xFF;
     uint16_t rgb565 = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 
-    // Fill both framebuffers
+    // Fill all framebuffers
     uint16_t* fb0 = static_cast<uint16_t*>(framebuffer0_);
     uint16_t* fb1 = static_cast<uint16_t*>(framebuffer1_);
+    uint16_t* fb2 = static_cast<uint16_t*>(framebuffer2_);
     size_t pixel_count = width_ * height_;
     
     for (size_t i = 0; i < pixel_count; ++i) {
         fb0[i] = rgb565;
         fb1[i] = rgb565;
+        fb2[i] = rgb565;
     }
+
 }
 
 void DisplayDriver::test_pattern_solid_red() {
@@ -347,9 +406,10 @@ void DisplayDriver::test_pattern_solid_red() {
     ESP_LOGI(TAG, "TEST PATTERN: Solid RED (0xF800)");
     ESP_LOGI(TAG, "========================================");
     
-    // Fill both framebuffers with RED (RGB565: 0xF800)
+    // Fill all framebuffers with RED (RGB565: 0xF800)
     uint16_t* fb0 = static_cast<uint16_t*>(framebuffer0_);
     uint16_t* fb1 = static_cast<uint16_t*>(framebuffer1_);
+    uint16_t* fb2 = static_cast<uint16_t*>(framebuffer2_);
     size_t pixel_count = width_ * height_;
     uint16_t red = 0xF800;
     
@@ -357,6 +417,7 @@ void DisplayDriver::test_pattern_solid_red() {
     for (size_t i = 0; i < pixel_count; ++i) {
         fb0[i] = red;
         fb1[i] = red;
+        fb2[i] = red;
     }
     
     ESP_LOGI(TAG, "Framebuffers filled with red");
@@ -380,15 +441,17 @@ void DisplayDriver::test_pattern_solid_green() {
     ESP_LOGI(TAG, "TEST PATTERN: Solid GREEN (0x07E0)");
     ESP_LOGI(TAG, "========================================");
     
-    // Fill both framebuffers with GREEN (RGB565: 0x07E0)
+    // Fill all framebuffers with GREEN (RGB565: 0x07E0)
     uint16_t* fb0 = static_cast<uint16_t*>(framebuffer0_);
     uint16_t* fb1 = static_cast<uint16_t*>(framebuffer1_);
+    uint16_t* fb2 = static_cast<uint16_t*>(framebuffer2_);
     size_t pixel_count = width_ * height_;
     uint16_t green = 0x07E0;
     
     for (size_t i = 0; i < pixel_count; ++i) {
         fb0[i] = green;
         fb1[i] = green;
+        fb2[i] = green;
     }
     
     ESP_LOGI(TAG, "Green test pattern complete - check display");
@@ -405,15 +468,17 @@ void DisplayDriver::test_pattern_solid_blue() {
     ESP_LOGI(TAG, "TEST PATTERN: Solid BLUE (0x001F)");
     ESP_LOGI(TAG, "========================================");
     
-    // Fill both framebuffers with BLUE (RGB565: 0x001F)
+    // Fill all framebuffers with BLUE (RGB565: 0x001F)
     uint16_t* fb0 = static_cast<uint16_t*>(framebuffer0_);
     uint16_t* fb1 = static_cast<uint16_t*>(framebuffer1_);
+    uint16_t* fb2 = static_cast<uint16_t*>(framebuffer2_);
     size_t pixel_count = width_ * height_;
     uint16_t blue = 0x001F;
     
     for (size_t i = 0; i < pixel_count; ++i) {
         fb0[i] = blue;
         fb1[i] = blue;
+        fb2[i] = blue;
     }
     
     ESP_LOGI(TAG, "Blue test pattern complete - check display");

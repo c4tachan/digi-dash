@@ -28,6 +28,7 @@ public:
     // ESP-IDF specific methods
     void draw_bitmap(uint32_t x_start, uint32_t y_start, uint32_t x_end, uint32_t y_end, const void* color_data);
     void refresh();
+    bool set_pixel_clock(uint32_t hz);
     
     // Test pattern methods (verify display is working before rendering gauge)
     void test_pattern_solid_red();
@@ -48,7 +49,10 @@ private:
     // Framebuffer pointers (managed by RGB panel driver in double-FB mode)
     void* framebuffer0_;
     void* framebuffer1_;
+    void* framebuffer2_;
     uint8_t* framebuffer_;  // Points to current active framebuffer
+    size_t num_framebuffers_;
+    size_t render_fb_index_;
     
     // Helper functions
     bool init_i2c_bus();
