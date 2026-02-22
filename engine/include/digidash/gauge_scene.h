@@ -47,6 +47,11 @@ public:
     void set_pid_value(uint32_t pid_id, float value);
 
     /**
+     * @brief Set target viewport used to fit the gauge onto the display
+     */
+    void set_viewport(uint32_t viewport_width, uint32_t viewport_height);
+
+    /**
      * @brief Get current width of the gauge
      */
     uint32_t get_width() const { return width_; }
@@ -63,8 +68,13 @@ private:
 
     BinaryGaugeLoader::GaugeAsset current_asset_;
     std::vector<VectorRenderer::BezierPath> paths_;
+    std::vector<VectorRenderer::BezierPath> transformed_paths_;
     uint32_t width_;
     uint32_t height_;
+    uint32_t viewport_width_;
+    uint32_t viewport_height_;
+
+    void rebuild_transformed_paths();
 };
 
 } // namespace digidash

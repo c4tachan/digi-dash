@@ -102,6 +102,7 @@ bool TileHeightRenderer::load_gauge(const uint8_t* data, size_t size) {
     
     gauge_scene_ = std::make_unique<GaugeScene>();
     gauge_scene_->load_gauge(asset);
+    gauge_scene_->set_viewport(display_.get_width(), display_.get_height());
     
     ESP_LOGI(TAG, "Gauge loaded successfully");
     return true;

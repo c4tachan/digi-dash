@@ -14,7 +14,9 @@ GaugeScene::GaugeScene()
       animation_engine_(std::make_unique<AnimationEngine>()),
       pid_system_(std::make_unique<PIDBindingSystem>()),
       width_(0),
-      height_(0) {}
+    height_(0),
+    viewport_width_(0),
+    viewport_height_(0) {}
 
 GaugeScene::~GaugeScene() {}
 
@@ -124,8 +126,77 @@ bool GaugeScene::load_gauge(const BinaryGaugeLoader::GaugeAsset& asset) {
             paths_.push_back(bezier_path);
         }
     }
+
+    rebuild_transformed_paths();
     
     return true;
+}
+
+void GaugeScene::set_viewport(uint32_t viewport_width, uint32_t viewport_height) {
+    viewport_width_ = viewport_width;
+    viewport_height_ = viewport_height;
+    rebuild_transformed_paths();
+}
+
+void GaugeScene::rebuild_transformed_paths() {
+    transformed_paths_.clear();
+
+    if (paths_.empty()) {
+        return;
+    }
+
+    if (width_ == 0 || height_ == 0 || viewport_width_ == 0 || viewport_height_ == 0) {
+        transformed_paths_ = paths_;
+        return;
+    }
+
+    float min_x = 0.0f;
+    float min_y = 0.0f;
+    float max_x = static_cast<float>(width_);
+    float max_y = static_cast<float>(height_);
+    bool has_points = false;
+
+    for (const auto& path : paths_) {
+        for (const auto& point : path.control_points) {
+            if (!has_points) {
+                min_x = max_x = point.x;
+                min_y = max_y = point.y;
+                has_points = true;
+            } else {
+                min_x = std::min(min_x, point.x);
+                min_y = std::min(min_y, point.y);
+                max_x = std::max(max_x, point.x);
+                max_y = std::max(max_y, point.y);
+            }
+        }
+    }
+
+    if (!has_points) {
+        transformed_paths_ = paths_;
+        return;
+    }
+
+    const float source_width = std::max(1.0f, max_x - min_x);
+    const float source_height = std::max(1.0f, max_y - min_y);
+
+    const float scale_x = static_cast<float>(viewport_width_) / source_width;
+    const float scale_y = static_cast<float>(viewport_height_) / source_height;
+    const float uniform_scale = std::min(scale_x, scale_y);
+
+    const float draw_width = source_width * uniform_scale;
+    const float draw_height = source_height * uniform_scale;
+    const float offset_x = (static_cast<float>(viewport_width_) - draw_width) * 0.5f;
+    const float offset_y = (static_cast<float>(viewport_height_) - draw_height) * 0.5f;
+
+    transformed_paths_.reserve(paths_.size());
+    for (const auto& path : paths_) {
+        VectorRenderer::BezierPath transformed = path;
+        for (auto& point : transformed.control_points) {
+            point.x = (point.x - min_x) * uniform_scale + offset_x;
+            point.y = (point.y - min_y) * uniform_scale + offset_y;
+        }
+        transformed_paths_.push_back(std::move(transformed));
+    }
 }
 
 void GaugeScene::update(uint32_t delta_ms) {
@@ -134,10 +205,10 @@ void GaugeScene::update(uint32_t delta_ms) {
 
 void GaugeScene::render(uint8_t* target_buffer, int width, int height,
                         int stride, int y_offset) {
-    if (!renderer_ || paths_.empty()) return;
+    if (!renderer_ || transformed_paths_.empty()) return;
     
     // Render all paths with y_offset for tiled rendering
-    for (const auto& path : paths_) {
+    for (const auto& path : transformed_paths_) {
         renderer_->render_path(path, target_buffer, width, height, stride, y_offset);
     }
 }
