@@ -116,8 +116,41 @@ bool Application::initialize() {
         return false;
     }
 
-    // Skip storage and renderer for Hello World demo
-    ESP_LOGI(TAG, "Skipping storage and renderer for Hello World demo");
+    // Initialize storage
+    ESP_LOGI(TAG, "Step 2/4: Initializing storage subsystem");
+    storage_ = std::make_unique<StorageManager>();
+    if (!storage_->initialize()) {
+        ESP_LOGE(TAG, "Failed to initialize storage");
+        return false;
+    }
+
+    // Initialize rendering engine
+    ESP_LOGI(TAG, "Step 3/4: Initializing rendering engine");
+    renderer_ = std::make_unique<RenderEngine>(*display_, TILE_HEIGHT);
+    if (!renderer_->initialize()) {
+        ESP_LOGE(TAG, "Failed to initialize renderer");
+        return false;
+    }
+
+    // Load gauge file
+    ESP_LOGI(TAG, "Step 4/4: Loading gauge file from SPIFFS");
+    
+    // Read gauge file from storage
+    std::vector<uint8_t> gauge_data;
+    if (!storage_->read_file(GAUGE_FILE_PATH, gauge_data)) {
+        ESP_LOGE(TAG, "Failed to read gauge file: %s", GAUGE_FILE_PATH);
+        return false;
+    }
+    
+    ESP_LOGI(TAG, "Gauge file loaded: %zu bytes", gauge_data.size());
+    
+    // Load gauge into renderer
+    if (!renderer_->load_gauge(gauge_data.data(), gauge_data.size())) {
+        ESP_LOGE(TAG, "Failed to load gauge into renderer");
+        return false;
+    }
+    
+    ESP_LOGI(TAG, "Gauge loaded successfully!");
     
     initialized_ = true;
     ESP_LOGI(TAG, "Application initialized successfully!");
@@ -132,12 +165,21 @@ void Application::run() {
 
     ESP_LOGI(TAG, "Starting main loop...");
     
-    // Display "Hello World" on startup
-    display_hello_world();
-
-    ESP_LOGI(TAG, "Hello World demo complete. Looping...");
+    // Clear to black before rendering gauge
+    display_->clear(0x000000);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    
+    ESP_LOGI(TAG, "Rendering gauge...");
+    
+    // Render gauge once
+    renderer_->render_frame();
+    
+    ESP_LOGI(TAG, "Gauge rendered successfully!");
+    ESP_LOGI(TAG, "Check display - you should see the gauge!");
+    
+    // Keep running (we could add animation updates here later)
     while (true) {
-        vTaskDelay(1000 / portTICK_PERIOD_MS);  // Just sleep
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
 

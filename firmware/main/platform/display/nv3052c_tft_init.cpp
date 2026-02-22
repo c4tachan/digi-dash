@@ -116,6 +116,26 @@ void Nv3052cTftInit::send_init_sequence() {
     // Memory access control (orientation)
     write_command(0x36, 0x0A);
     
+    // Column Address Set (CASET) - shift right by ~45 pixels to compensate for 5mm offset
+    // Format: XS_H, XS_L, XE_H, XE_L (start column, end column)
+    // Original: 0,0 to 719,719 -> shift by 45: 45,0 to 764,719
+    pca_expander_.clear_pins(Pca9554Expander::PIN_TFT_CS);
+    write_9bit(0, 0x2A);  // CASET command
+    write_9bit(1, 0x00);  // XS high byte
+    write_9bit(1, 0x2D);  // XS low byte (45 decimal = 0x2D)
+    write_9bit(1, 0x02);  // XE high byte (764 = 0x2FC)
+    write_9bit(1, 0xFC);  // XE low byte
+    pca_expander_.set_pins(Pca9554Expander::PIN_TFT_CS);
+    
+    // Row Address Set (RASET) - keep at 0-719
+    pca_expander_.clear_pins(Pca9554Expander::PIN_TFT_CS);
+    write_9bit(0, 0x2B);  // RASET command
+    write_9bit(1, 0x00);  // YS high byte
+    write_9bit(1, 0x00);  // YS low byte (0)
+    write_9bit(1, 0x02);  // YE high byte (719 = 0x2CF)
+    write_9bit(1, 0xCF);  // YE low byte
+    pca_expander_.set_pins(Pca9554Expander::PIN_TFT_CS);
+    
     // Sleep Out - command only (send command without data byte)
     pca_expander_.clear_pins(Pca9554Expander::PIN_TFT_CS);
     write_9bit(0, 0x11);  // D/C=0 for command

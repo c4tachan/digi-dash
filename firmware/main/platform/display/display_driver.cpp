@@ -260,7 +260,48 @@ void DisplayDriver::draw_bitmap(uint32_t x_start, uint32_t y_start, uint32_t x_e
         return;
     }
     
-    esp_lcd_panel_draw_bitmap(panel_handle_, x_start, y_start, x_end, y_end, color_data);
+    // Log any out-of-bounds calls
+    if (x_end > width_ || y_end > height_) {
+        ESP_LOGW(TAG, "draw_bitmap called with out-of-bounds: x_start=%u, y_start=%u, x_end=%u, y_end=%u (display is %ux%u)",
+             (unsigned)x_start, (unsigned)y_start, (unsigned)x_end, (unsigned)y_end,
+             (unsigned)width_, (unsigned)height_);
+    }
+    
+    // Write directly to both framebuffers for double-buffering
+    uint16_t* fb0 = static_cast<uint16_t*>(framebuffer0_);
+    uint16_t* fb1 = static_cast<uint16_t*>(framebuffer1_);
+    const uint16_t* src = static_cast<const uint16_t*>(color_data);
+    
+    uint32_t tile_width = x_end - x_start;
+    uint32_t tile_height = y_end - y_start;
+    
+    // Clamp to display bounds to prevent wrapping
+    if (x_start >= width_ || y_start >= height_) {
+        return;  // Completely off screen
+    }
+    
+    // Adjust tile dimensions if they extend beyond screen
+    if (x_end > width_) {
+        tile_width = width_ - x_start;
+    }
+    if (y_end > height_) {
+        tile_height = height_ - y_start;
+    }
+    
+    // Copy tile data row by row to both framebuffers
+    for (uint32_t row = 0; row < tile_height; row++) {
+        uint32_t y = y_start + row;
+        if (y >= height_) break;  // Safety check
+        
+        uint32_t fb_offset = y * width_ + x_start;
+        uint32_t src_offset = row * (x_end - x_start);  // Use original width for source
+        
+        // Copy to both framebuffers with bounds check
+        if (fb_offset + tile_width <= width_ * height_) {
+            std::memcpy(&fb0[fb_offset], &src[src_offset], tile_width * sizeof(uint16_t));
+            std::memcpy(&fb1[fb_offset], &src[src_offset], tile_width * sizeof(uint16_t));
+        }
+    }
 }
 
 void DisplayDriver::refresh() {
