@@ -22,4 +22,8 @@ void RenderEngine::render_frame() {
     renderer_->render_frame();
 }
 
+void RenderEngine::set_pid_value(uint32_t pid_id, float value) {
+    renderer_->set_pid_value(pid_id, value);
+}
+
 } // namespace digidash

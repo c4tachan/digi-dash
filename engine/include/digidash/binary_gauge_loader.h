@@ -35,6 +35,19 @@ struct Path {
     std::vector<PathCommand> commands;
 };
 
+struct PathAnimationBinding {
+    enum class Type : uint8_t {
+        None = 0,
+        TrimSweep = 1,
+    };
+
+    std::string path_id;
+    Type type;
+    float min_value;
+    float max_value;
+    std::string pid_name;
+};
+
 /**
  * @brief Loads binary gauge asset files
  * 
@@ -51,6 +64,7 @@ public:
         uint32_t width;
         uint32_t height;
         std::vector<Path> paths;
+        std::vector<PathAnimationBinding> path_animations;
         std::vector<uint8_t> animation_data;
         std::vector<uint8_t> pid_binding_data;
     };

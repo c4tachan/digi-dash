@@ -25,6 +25,7 @@ public:
     bool initialize() override;
     bool load_gauge(const uint8_t* data, size_t size) override;
     void render_frame() override;
+    void set_pid_value(uint32_t pid_id, float value) override;
     uint32_t get_frame_count() const override { return frame_count_; }
 
     // Test hook: provide a function to render into the RGBA tile buffer for tests

@@ -19,7 +19,7 @@ void GaugeSerializer::write_binary(const GaugeDocument& doc, const std::string& 
     // Header: magic + version + path_count + width + height
     const char magic[4] = {'D', 'G', 'G', 'E'};
     os.write(magic, 4);
-    uint16_t version = 1;
+    uint16_t version = 2;
     write_u16(os, version);
     write_u16(os, static_cast<uint16_t>(doc.paths.size()));
     write_u16(os, static_cast<uint16_t>(doc.width));
@@ -53,6 +53,18 @@ void GaugeSerializer::write_binary(const GaugeDocument& doc, const std::string& 
             write_f32(os, cmd.x3);
             write_f32(os, cmd.y3);
         }
+    }
+
+    // Animation section (v2+)
+    write_u16(os, static_cast<uint16_t>(doc.animations.size()));
+    for (const auto& anim : doc.animations) {
+        write_u8(os, static_cast<uint8_t>(anim.path_id.size()));
+        os.write(anim.path_id.data(), static_cast<std::streamsize>(anim.path_id.size()));
+        write_u8(os, static_cast<uint8_t>(anim.type));
+        write_f32(os, anim.min_value);
+        write_f32(os, anim.max_value);
+        write_u8(os, static_cast<uint8_t>(anim.pid.size()));
+        os.write(anim.pid.data(), static_cast<std::streamsize>(anim.pid.size()));
     }
 }
 

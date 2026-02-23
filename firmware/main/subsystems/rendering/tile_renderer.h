@@ -32,6 +32,11 @@ public:
     virtual void render_frame() = 0;
 
     /**
+     * @brief Update a PID value used by animated gauge elements
+     */
+    virtual void set_pid_value(uint32_t pid_id, float value) = 0;
+
+    /**
      * @brief Get frame count
      */
     virtual uint32_t get_frame_count() const = 0;

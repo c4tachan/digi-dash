@@ -108,6 +108,12 @@ bool TileHeightRenderer::load_gauge(const uint8_t* data, size_t size) {
     return true;
 }
 
+void TileHeightRenderer::set_pid_value(uint32_t pid_id, float value) {
+    if (gauge_scene_) {
+        gauge_scene_->set_pid_value(pid_id, value);
+    }
+}
+
 void TileHeightRenderer::render_frame() {
     if (!initialized_ || (!gauge_scene_ && !test_render_cb_)) {
         return;
@@ -115,6 +121,17 @@ void TileHeightRenderer::render_frame() {
 
     uint32_t width = display_.get_width();
     uint32_t height = display_.get_height();
+
+    if (gauge_scene_) {
+        static uint32_t last_tick = xTaskGetTickCount();
+        uint32_t now_tick = xTaskGetTickCount();
+        uint32_t delta_ms = (now_tick - last_tick) * portTICK_PERIOD_MS;
+        if (delta_ms == 0) {
+            delta_ms = 1;
+        }
+        last_tick = now_tick;
+        gauge_scene_->update(delta_ms);
+    }
     
     // Render frame tile by tile
     for (uint32_t tile = 0; tile < num_tiles_; tile++) {

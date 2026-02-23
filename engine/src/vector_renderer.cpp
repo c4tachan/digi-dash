@@ -23,6 +23,11 @@ void VectorRenderer::render_path(const BezierPath& path, uint8_t* target_buffer,
     uint8_t b = (color >> 0) & 0xFF;
     uint8_t a = (color >> 24) & 0xFF;
     
+    #ifndef ESP_PLATFORM
+    // Simulator uses BGR pixel order, swap R and B
+    std::swap(r, b);
+    #endif
+    
     if (path.is_filled) {
         // Draw filled shape - simple polygon fill
         draw_filled_path(path.control_points, target_buffer, width, height, 

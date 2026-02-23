@@ -7,3 +7,6 @@ set(PARTITION_TABLE_CSV_PATH "${CMAKE_CURRENT_SOURCE_DIR}/partitions.csv")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
 project(digi-dash)
+
+# Auto-generate SPIFFS partition image from spiffs_image directory
+spiffs_create_partition_image(spiffs spiffs_image FLASH_IN_PROJECT)

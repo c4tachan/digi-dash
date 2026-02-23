@@ -43,10 +43,24 @@ struct Path {
     FillStyle fill;
 };
 
+enum class AnimationType : uint8_t {
+    None = 0,
+    TrimSweep = 1,
+};
+
+struct PathAnimationBinding {
+    std::string path_id;
+    AnimationType type{AnimationType::None};
+    float min_value{0.0f};
+    float max_value{1.0f};
+    std::string pid;
+};
+
 struct GaugeDocument {
     float width{0.0f};
     float height{0.0f};
     std::vector<Path> paths;
+    std::vector<PathAnimationBinding> animations;
 };
 
 } // namespace digidash

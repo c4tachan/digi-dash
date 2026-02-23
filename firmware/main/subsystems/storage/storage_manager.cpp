@@ -3,6 +3,7 @@
 #include "esp_vfs.h"
 #include "esp_spiffs.h"
 #include <cstdio>
+#include <dirent.h>
 
 static const char* TAG = "StorageManager";
 
@@ -51,6 +52,22 @@ bool StorageManager::initialize() {
     
     ESP_LOGI(TAG, "SPIFFS initialized - total: %zu bytes, used: %zu bytes", 
              total_bytes_, used_bytes_);
+    
+    // Debug: List all files in SPIFFS
+    ESP_LOGI(TAG, "Listing files in /spiffs:");
+    DIR* dir = opendir("/spiffs");
+    if (dir) {
+        struct dirent* entry;
+        int file_count = 0;
+        while ((entry = readdir(dir)) != nullptr) {
+            ESP_LOGI(TAG, "  - %s", entry->d_name);
+            file_count++;
+        }
+        closedir(dir);
+        ESP_LOGI(TAG, "Total files: %d", file_count);
+    } else {
+        ESP_LOGE(TAG, "Failed to open /spiffs directory");
+    }
     
     initialized_ = true;
     return true;

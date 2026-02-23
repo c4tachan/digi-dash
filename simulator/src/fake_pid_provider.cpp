@@ -3,12 +3,31 @@
 
 namespace digidash {
 
+namespace {
+
+float triangle01(uint32_t elapsed_ms, uint32_t period_ms) {
+    if (period_ms < 2) {
+        return 0.0f;
+    }
+
+    const uint32_t half_period = period_ms / 2;
+    const uint32_t phase = elapsed_ms % period_ms;
+
+    if (phase <= half_period) {
+        return static_cast<float>(phase) / static_cast<float>(half_period);
+    }
+
+    return static_cast<float>(period_ms - phase) / static_cast<float>(half_period);
+}
+
+}
+
 FakePIDProvider::FakePIDProvider() : elapsed_time_(0), simulation_mode_(0) {}
 
 float FakePIDProvider::get_engine_rpm() {
-    // Sine wave: 1000-3500 RPM
-    float sine = std::sin(elapsed_time_ * 0.002f);
-    return 2250.0f + sine * 1250.0f;
+    // Full configured sweep: 0-8000 RPM
+    const float t = triangle01(elapsed_time_, 5000);
+    return 8000.0f * t;
 }
 
 float FakePIDProvider::get_vehicle_speed() {
@@ -24,9 +43,9 @@ float FakePIDProvider::get_throttle_position() {
 }
 
 float FakePIDProvider::get_coolant_temp() {
-    // Ramp up from 60 to 100°C
-    float temp = 60.0f + (elapsed_time_ % 5000) / 50.0f;
-    return temp > 100.0f ? 100.0f : temp;
+    // Full configured sweep: 160-260
+    const float t = triangle01(elapsed_time_, 6000);
+    return 160.0f + 100.0f * t;
 }
 
 void FakePIDProvider::update(uint32_t delta_ms) { elapsed_time_ += delta_ms; }

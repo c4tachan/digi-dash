@@ -21,11 +21,6 @@
           "source": "pid",
           "pid": "engine_rpm"
         }
-      },
-      "style": {
-        "stroke_color": "#FF0000",
-        "stroke_width": 8,
-        "fill": "none"
       }
     },
 
@@ -43,11 +38,6 @@
           "source": "pid",
           "pid": "coolant_temp"
         }
-      },
-      "style": {
-        "stroke_color": "#00A0FF",
-        "stroke_width": 8,
-        "fill": "none"
       }
     }
   ]

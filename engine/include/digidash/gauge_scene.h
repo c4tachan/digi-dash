@@ -7,6 +7,9 @@
 
 #include <memory>
 #include <cstdint>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace digidash {
 
@@ -62,19 +65,37 @@ public:
     uint32_t get_height() const { return height_; }
 
 private:
+    struct RuntimePathAnimation {
+        size_t path_index;
+        float min_value;
+        float max_value;
+        std::string pid_name;
+        uint32_t pid_id;
+        bool uses_pid;
+        bool reverse;
+    };
+
     std::unique_ptr<VectorRenderer> renderer_;
     std::unique_ptr<AnimationEngine> animation_engine_;
     std::unique_ptr<PIDBindingSystem> pid_system_;
 
     BinaryGaugeLoader::GaugeAsset current_asset_;
+    std::vector<std::string> path_ids_;
+    std::vector<RuntimePathAnimation> runtime_animations_;
+    std::unordered_map<std::string, uint32_t> pid_name_to_id_;
+    std::unordered_set<uint32_t> seen_pid_ids_;
     std::vector<VectorRenderer::BezierPath> paths_;
     std::vector<VectorRenderer::BezierPath> transformed_paths_;
+    uint32_t animation_time_ms_;
     uint32_t width_;
     uint32_t height_;
     uint32_t viewport_width_;
     uint32_t viewport_height_;
 
     void rebuild_transformed_paths();
+    const RuntimePathAnimation* find_runtime_animation(size_t path_index) const;
+    float get_runtime_animation_value(const RuntimePathAnimation& animation) const;
+    VectorRenderer::BezierPath trim_path_by_ratio(const VectorRenderer::BezierPath& path, float ratio, bool reverse = false) const;
 };
 
 } // namespace digidash

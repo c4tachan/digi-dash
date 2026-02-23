@@ -171,15 +171,12 @@ void Application::run() {
     
     ESP_LOGI(TAG, "Rendering gauge...");
     
-    // Render gauge once
-    renderer_->render_frame();
-    
-    ESP_LOGI(TAG, "Gauge rendered successfully!");
-    ESP_LOGI(TAG, "Check display - you should see the gauge!");
-    
-    // Keep running (we could add animation updates here later)
+    ESP_LOGI(TAG, "Starting animated render loop at %u FPS", static_cast<unsigned>(TARGET_FPS));
+
+    // Animated render loop
     while (true) {
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        renderer_->render_frame();
+        vTaskDelay(FRAME_DELAY_MS / portTICK_PERIOD_MS);
     }
 }
 

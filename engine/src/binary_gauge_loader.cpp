@@ -47,7 +47,7 @@ bool BinaryGaugeLoader::load_from_buffer(const uint8_t* buffer,
     std::memcpy(&version, buffer + offset, sizeof(uint16_t));
     offset += sizeof(uint16_t);
     
-    if (version != 1) {
+    if (version != 1 && version != 2) {
         return false;
     }
     
@@ -68,6 +68,9 @@ bool BinaryGaugeLoader::load_from_buffer(const uint8_t* buffer,
     asset_out.width = width;
     asset_out.height = height;
     
+    asset_out.paths.clear();
+    asset_out.path_animations.clear();
+
     // Parse each path
     for (uint16_t i = 0; i < path_count; ++i) {
         if (offset >= buffer_size) break;
@@ -126,6 +129,48 @@ bool BinaryGaugeLoader::load_from_buffer(const uint8_t* buffer,
         }
         
         asset_out.paths.push_back(path);
+    }
+
+    if (version >= 2 && offset + sizeof(uint16_t) <= buffer_size) {
+        uint16_t animation_count;
+        std::memcpy(&animation_count, buffer + offset, sizeof(uint16_t));
+        offset += sizeof(uint16_t);
+
+        for (uint16_t i = 0; i < animation_count; ++i) {
+            if (offset >= buffer_size) {
+                break;
+            }
+
+            PathAnimationBinding binding;
+
+            uint8_t path_id_len = buffer[offset++];
+            if (offset + path_id_len > buffer_size) {
+                break;
+            }
+            binding.path_id.assign(reinterpret_cast<const char*>(buffer + offset), path_id_len);
+            offset += path_id_len;
+
+            if (offset + 1 + sizeof(float) * 2 > buffer_size) {
+                break;
+            }
+            binding.type = static_cast<PathAnimationBinding::Type>(buffer[offset++]);
+            std::memcpy(&binding.min_value, buffer + offset, sizeof(float));
+            offset += sizeof(float);
+            std::memcpy(&binding.max_value, buffer + offset, sizeof(float));
+            offset += sizeof(float);
+
+            if (offset >= buffer_size) {
+                break;
+            }
+            uint8_t pid_len = buffer[offset++];
+            if (offset + pid_len > buffer_size) {
+                break;
+            }
+            binding.pid_name.assign(reinterpret_cast<const char*>(buffer + offset), pid_len);
+            offset += pid_len;
+
+            asset_out.path_animations.push_back(std::move(binding));
+        }
     }
     
     return validate_asset(asset_out);

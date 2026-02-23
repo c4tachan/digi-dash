@@ -23,6 +23,7 @@ target_link_libraries(digi-dash-simulator
 
 target_include_directories(digi-dash-simulator PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../engine/include
 )
 
 # Copy assets to build directory
