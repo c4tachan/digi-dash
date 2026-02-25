@@ -26,7 +26,7 @@ The engine depends on abstract interfaces implemented by platform-specific code:
 - **PlatformDisplay**: Framebuffer access (SDL2 on Linux, LVGL on ESP32)
 - **PlatformInput**: Button and touch input handling
 - **PlatformStorage**: File/flash storage operations
-- **PlatformBluetooth**: Bluetooth communication for OBD2 and asset transfer
+- **PlatformDataLink**: Data transport abstraction for OBD2 and asset transfer
 
 ### 3. Linux Simulator (`simulator/`)
 
@@ -43,7 +43,7 @@ Production code for the ESP32-S3:
 
 - **LVGL Display**: Full-featured display rendering
 - **FreeRTOS Tasks**: Real-time execution
-- **Bluetooth Stack**: OBD2 data reception and asset updates
+- **Serial/UART Data Link**: OBD2 data reception and asset updates
 - **Flash Storage**: Gauge asset persistence
 
 ### 5. Preprocessing Tools (`tools/`)
@@ -90,7 +90,7 @@ idf.py monitor
 ### Live Updates
 
 ```
-1. OBD2 Bluetooth → PIDBindingSystem
+1. OBD2 UART/serial → PIDBindingSystem
 2. GaugeScene::set_pid_value()
 3. AnimationEngine updates needle position
 4. VectorRenderer outputs to display
@@ -122,4 +122,4 @@ scripts/                    # Build and deployment helpers
 - Create binary gauge file format specification
 - Develop SVG preprocessing pipeline
 - Implement LVGL platform layer for ESP32
-- Add Bluetooth OBD2 protocol handling
+- Add OBD2 protocol handling (UART/serial transport)

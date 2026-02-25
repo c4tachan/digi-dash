@@ -2,7 +2,7 @@
 
 ## Overview
 
-The digi-dash simulator now supports reading real vehicle data from OBD-II Bluetooth adapters (ELM327 compatible). This allows you to display live engine metrics on the dashboard.
+The digi-dash simulator supports reading real vehicle data from OBD-II serial/UART adapters (ELM327 compatible). This allows you to display live engine metrics on the dashboard.
 
 ## Architecture
 
@@ -86,18 +86,18 @@ pid_config["coolant_temp"] = {"0105", "Coolant Temperature", "°C"};
 ./digi-dash-simulator --mock
 
 # Real OBD-II data
-./digi-dash-simulator --obd2 /dev/rfcomm0
+./digi-dash-simulator --obd2 /dev/ttyUSB0
 
 # Help
 ./digi-dash-simulator --help
 ```
 
-### Bluetooth Setup Workflow
+### Serial/UART Setup Workflow
 
-1. **Pair Adapter**: Use `bluetoothctl` to pair ELM327
-2. **Create Serial Port**: `sudo rfcomm bind /dev/rfcomm0 <MAC> 1`
+1. **Connect Adapter**: Connect USB/UART ELM327 adapter
+2. **Choose Serial Port**: e.g. `/dev/ttyUSB0` or `/dev/ttyACM0`
 3. **Set Permissions**: `sudo usermod -a -G dialout $USER`
-4. **Run Simulator**: `./digi-dash-simulator --obd2 /dev/rfcomm0`
+4. **Run Simulator**: `./digi-dash-simulator --obd2 /dev/ttyUSB0`
 
 ## Performance
 
@@ -110,7 +110,7 @@ pid_config["coolant_temp"] = {"0105", "Coolant Temperature", "°C"};
 ### Current Implementation
 
 - **Linux Only**: Uses POSIX termios (Windows/macOS need porting)
-- **Serial Only**: No direct Bluetooth socket support
+- **Serial Only**: Uses serial/UART transport
 - **Standard PIDs**: Only implements basic Mode 01 PIDs
 - **Single ECU**: Doesn't support multi-ECU vehicles
 - **No CAN**: Direct CAN bus access not implemented
@@ -133,7 +133,7 @@ Potential improvements:
 5. **Automatic Baud Detection**: Try 9600 if 38400 fails
 6. **CAN Filtering**: Optimize queries for specific ECUs
 7. **Windows/macOS**: Port serial code to other platforms
-8. **Direct Bluetooth**: Use Bluetooth sockets without RFCOMM
+8. **Transport abstraction**: Add alternate transports beyond serial/UART if needed
 9. **Configuration File**: Load PID map from JSON
 
 ## Debugging
@@ -155,7 +155,7 @@ The implementation already logs:
 
 | Symptom | Cause | Solution |
 |---------|-------|----------|
-| "Failed to open" | Device doesn't exist | Check `rfcomm bind` command |
+| "Failed to open" | Device doesn't exist | Check serial path (e.g. `/dev/ttyUSB0`) |
 | "Permission denied" | No dialout group | `sudo usermod -a -G dialout $USER` |
 | "No response" | Vehicle off or adapter not ready | Turn ignition ON |
 | Parse errors | Non-standard adapter | Try different ELM327 clone |

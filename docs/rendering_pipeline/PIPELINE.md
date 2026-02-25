@@ -45,7 +45,7 @@ The rendering pipeline converts gauge data → screen pixels in real-time on bot
 - 30 FPS target = ~33 ms per frame
 - Vector rasterization: ~15 ms
 - Animation updates: ~2 ms
-- Bluetooth/OBD2: ~5 ms (interrupt-driven)
+- OBD2 UART/serial: ~5 ms (interrupt-driven)
 - Headroom: ~11 ms
 
 ### Optimization Strategies

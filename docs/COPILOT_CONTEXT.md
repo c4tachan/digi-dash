@@ -141,7 +141,7 @@ Use abstract interfaces for platform-specific functionality:
 - PlatformDisplay
 - PlatformInput
 - PlatformStorage
-- PlatformBluetooth
+- PlatformDataLink
 
 ---
 

@@ -127,5 +127,5 @@ ninja
 2. Create SVG preprocessing pipeline
 3. Implement binary gauge file loader
 4. Add LVGL display support for ESP32
-5. Implement Bluetooth OBD2 data reception
+5. Implement UART/serial OBD2 data reception
 6. Create example gauges (RPM, speed, temperature)

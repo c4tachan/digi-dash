@@ -2,7 +2,7 @@
 
 ## What We Built
 
-Successfully integrated **real-time OBD-II Bluetooth connectivity** into the digi-dash simulator. You can now connect to your vehicle's ECU using an ELM327 adapter and display live engine data on the dashboard.
+Successfully integrated **real-time OBD-II serial/UART connectivity** into digi-dash. You can connect to your vehicle's ECU using an ELM327-compatible adapter and display live engine data on the dashboard.
 
 ## Summary of Changes
 
@@ -22,9 +22,9 @@ Successfully integrated **real-time OBD-II Bluetooth connectivity** into the dig
    - Automatic data source selection based on arguments
 
 ### 3. **Documentation**
-   - **Setup Guide**: [`docs/OBD2_BLUETOOTH_SETUP.md`](OBD2_BLUETOOTH_SETUP.md)
-     - Complete Bluetooth pairing instructions
-     - RFCOMM serial port setup
+    - **Setup Guide**: [`docs/OBD2_UART_SETUP.md`](OBD2_UART_SETUP.md)
+       - Wired UART/serial setup
+       - Firmware flash/monitor command flow
      - Troubleshooting common issues
    
    - **Implementation Details**: [`docs/OBD2_IMPLEMENTATION.md`](OBD2_IMPLEMENTATION.md)
@@ -48,15 +48,10 @@ cd /home/c4tachan/projects/digi-dash/simulator/build
 
 ### Real Vehicle Data
 ```bash
-# 1. Pair your ELM327 Bluetooth adapter
-bluetoothctl
-# scan on, pair XX:XX:XX:XX:XX:XX, trust, exit
-
-# 2. Create serial connection
-sudo rfcomm bind /dev/rfcomm0 XX:XX:XX:XX:XX:XX 1
-
+# 1. Connect ELM327 serial/UART adapter
+# 2. Identify serial device (example: /dev/ttyUSB0)
 # 3. Run with OBD-II
-./digi-dash-simulator --obd2 /dev/rfcomm0
+./digi-dash-simulator --obd2 /dev/ttyUSB0
 ```
 
 ## Supported Metrics
@@ -85,13 +80,13 @@ Currently reads these standard OBD-II parameters:
 
 ### Data Flow
 ```
-Vehicle ECU → ELM327 Adapter → Bluetooth → RFCOMM → Serial Port 
+Vehicle ECU → ELM327 Adapter → UART/Serial Port 
   → OBD2DataSource → Dashboard Gauges → SDL2 Window
 ```
 
 ## What Works Now
 
-✅ Bluetooth ELM327 adapter connection  
+✅ ELM327 UART/serial adapter connection  
 ✅ Serial port communication  
 ✅ ELM327 initialization  
 ✅ Standard PID queries (RPM, Speed, Coolant Temp)  
@@ -104,18 +99,18 @@ Vehicle ECU → ELM327 Adapter → Bluetooth → RFCOMM → Serial Port
 
 To connect to your vehicle:
 
-1. **Get Hardware**: Purchase an ELM327 Bluetooth adapter (~$10-30)
+1. **Get Hardware**: Use an ELM327-compatible UART/serial adapter (~$10-30)
    - Recommendation: Get a v1.5 or newer genuine chip
    - Avoid cheap clones with fake version numbers
 
-2. **Follow Setup Guide**: See [`docs/OBD2_BLUETOOTH_SETUP.md`](OBD2_BLUETOOTH_SETUP.md)
-   - Pairing instructions
-   - Permission setup
+2. **Follow Setup Guide**: See [`docs/OBD2_UART_SETUP.md`](OBD2_UART_SETUP.md)
+   - Serial path selection
+   - Permission setup (`dialout`)
    - Troubleshooting tips
 
 3. **Test Connection**: 
    ```bash
-   ./digi-dash-simulator --obd2 /dev/rfcomm0
+   ./digi-dash-simulator --obd2 /dev/ttyUSB0
    ```
 
 4. **Watch Your Dashboard**: Real-time vehicle data! 🎉
@@ -143,7 +138,7 @@ To connect to your vehicle:
 ### With a Vehicle
 ```bash
 # Live OBD-II data
-./digi-dash-simulator --obd2 /dev/rfcomm0
+./digi-dash-simulator --obd2 /dev/ttyUSB0
 ```
 
 ### Help
@@ -164,7 +159,7 @@ To connect to your vehicle:
 ### New Files
 - `simulator/src/obd2_data_source.cpp` - OBD-II implementation
 - `simulator/include/obd2_data_source.h` - OBD-II interface
-- `docs/OBD2_BLUETOOTH_SETUP.md` - Setup guide
+- `docs/OBD2_UART_SETUP.md` - Setup guide
 - `docs/OBD2_IMPLEMENTATION.md` - Technical details
 - `docs/OBD2_COMPLETE.md` - This file
 
@@ -177,8 +172,7 @@ To connect to your vehicle:
 
 **Supported Adapters**:
 - ELM327 v1.5+
-- Generic Bluetooth OBD-II adapters
-- USB OBD-II adapters (via /dev/ttyUSB0)
+- USB/UART OBD-II adapters (for example `/dev/ttyUSB0`)
 
 **Tested Platforms**:
 - Ubuntu 22.04/24.04
@@ -207,4 +201,4 @@ To connect to your vehicle:
 
 **Status**: ✅ **READY TO USE!**
 
-Connect your ELM327 adapter and start seeing real vehicle data on your dashboard! 🚗💨
+Connect your ELM327 serial/UART adapter and start seeing real vehicle data on your dashboard! 🚗💨
