@@ -167,7 +167,6 @@ void Application::run() {
     
     // Clear to black before rendering gauge
     display_->clear(0x000000);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
     
     ESP_LOGI(TAG, "Rendering gauge...");
     

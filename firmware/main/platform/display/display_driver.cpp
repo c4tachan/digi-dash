@@ -22,7 +22,8 @@ DisplayDriver::DisplayDriver(uint32_t width, uint32_t height)
     , initialized_(false)
     , framebuffer0_(nullptr)
     , framebuffer1_(nullptr)
-    , framebuffer_(nullptr) {
+    , framebuffer_(nullptr)
+    , active_fb_index_(0) {
 }
 
 DisplayDriver::~DisplayDriver() {
@@ -180,6 +181,7 @@ bool DisplayDriver::init_rgb_panel() {
     
     // Set current framebuffer pointer (will flip between them)
     framebuffer_ = static_cast<uint8_t*>(framebuffer0_);
+    active_fb_index_ = 0;
     
     // Reset and initialize panel
     ESP_LOGI(TAG, "Resetting and initializing RGB panel");
@@ -310,9 +312,37 @@ void DisplayDriver::refresh() {
 }
 
 void DisplayDriver::unlock_and_update() {
-    // In double-FB mode, the driver automatically handles buffer swapping
-    // We just need to ensure the data is visible (cache flush if needed)
-    // The framebuffer_ pointer always points to the current back buffer
+    // Present the currently selected framebuffer as a full frame.
+    if (!initialized_ || !framebuffer_) {
+        return;
+    }
+    esp_lcd_panel_draw_bitmap(panel_handle_, 0, 0, width_, height_, framebuffer_);
+}
+
+uint16_t* DisplayDriver::acquire_back_buffer() {
+    if (!framebuffer0_ || !framebuffer1_) {
+        return nullptr;
+    }
+
+    uint8_t next_index = active_fb_index_ ? 0 : 1;
+    return static_cast<uint16_t*>(next_index == 0 ? framebuffer0_ : framebuffer1_);
+}
+
+void DisplayDriver::present_back_buffer(const uint16_t* back_buffer) {
+    if (!initialized_ || !back_buffer) {
+        return;
+    }
+
+    if (back_buffer == framebuffer0_) {
+        active_fb_index_ = 0;
+    } else if (back_buffer == framebuffer1_) {
+        active_fb_index_ = 1;
+    } else {
+        return;
+    }
+
+    framebuffer_ = (active_fb_index_ == 0) ? static_cast<uint8_t*>(framebuffer0_) : static_cast<uint8_t*>(framebuffer1_);
+    esp_lcd_panel_draw_bitmap(panel_handle_, 0, 0, width_, height_, framebuffer_);
 }
 
 void DisplayDriver::clear(uint32_t color) {

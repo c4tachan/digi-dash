@@ -23,6 +23,10 @@ target_include_directories(digidash-engine PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include/digidash/platform
 )
 
+# Enable optional per-path profiling for diagnosing render hotspots.
+# Define PATH_PROFILING=1 to enable timing and aggregated logs.
+target_compile_definitions(digidash-engine PRIVATE PATH_PROFILING=1)
+
 # For ESP32, we'll link against ESP-IDF provided libraries
 # For Linux simulator, we'll link against SDL2 and LVGL
 if(IDF_TARGET)

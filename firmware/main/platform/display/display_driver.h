@@ -28,6 +28,8 @@ public:
     // ESP-IDF specific methods
     void draw_bitmap(uint32_t x_start, uint32_t y_start, uint32_t x_end, uint32_t y_end, const void* color_data);
     void refresh();
+    uint16_t* acquire_back_buffer();
+    void present_back_buffer(const uint16_t* back_buffer);
     
     // Test pattern methods (verify display is working before rendering gauge)
     void test_pattern_solid_red();
@@ -49,6 +51,7 @@ private:
     void* framebuffer0_;
     void* framebuffer1_;
     uint8_t* framebuffer_;  // Points to current active framebuffer
+    uint8_t active_fb_index_;
     
     // Helper functions
     bool init_i2c_bus();

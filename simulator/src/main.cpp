@@ -8,6 +8,7 @@
 #include <iostream>
 #include <chrono>
 #include <cstring>
+#include <thread>
 #include <SDL2/SDL.h>
 
 using namespace digidash;
@@ -53,9 +54,10 @@ int main(int argc, char* argv[]) {
     FakePIDProvider pid_provider;
 
     // Main loop
-    auto last_time = std::chrono::high_resolution_clock::now();
-    const uint32_t target_fps = 30;
+    auto last_time = std::chrono::steady_clock::now();
+    const uint32_t target_fps = 60;
     const uint32_t frame_time_ms = 1000 / target_fps;
+    uint32_t accumulated_ms = 0;
 
     std::cout << "Digi-Dash Simulator started (720x720, 30 FPS)\n";
     std::cout << "Rendering gauge from: " << gauge_file << "\n";
@@ -75,23 +77,28 @@ int main(int argc, char* argv[]) {
             }
         }
         
-        auto now = std::chrono::high_resolution_clock::now();
-        auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        now - last_time)
-                        .count();
+        auto now = std::chrono::steady_clock::now();
+        uint32_t delta = static_cast<uint32_t>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - last_time).count());
+        last_time = now;
 
-        if (delta >= frame_time_ms) {
-            last_time = now;
+        if (delta > 100) {
+            delta = 100;
+        }
+        accumulated_ms += delta;
 
-            // Update simulation
-            pid_provider.update(delta);
+        while (accumulated_ms >= frame_time_ms) {
+            accumulated_ms -= frame_time_ms;
+
+            // Update simulation at fixed timestep
+            pid_provider.update(frame_time_ms);
             gauge->set_pid_value(0, pid_provider.get_engine_rpm());
             gauge->set_pid_value(1, pid_provider.get_vehicle_speed());
             gauge->set_pid_value(2, pid_provider.get_throttle_position());
             gauge->set_pid_value(3, pid_provider.get_coolant_temp());
 
             // Update gauge
-            gauge->update(delta);
+            gauge->update(frame_time_ms);
 
             // Render
             display->clear(0xFF000000); // Black background
@@ -100,6 +107,8 @@ int main(int argc, char* argv[]) {
                          display->get_stride());
             display->unlock_and_update();
         }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     std::cout << "Simulator exiting normally\n";

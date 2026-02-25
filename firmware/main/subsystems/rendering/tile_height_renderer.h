@@ -5,6 +5,7 @@
 #include <memory>
 #include <functional>
 #include <cstdint>
+#include <vector>
 
 namespace digidash {
 
@@ -33,6 +34,7 @@ public:
 
 private:
     void convert_rgba_to_rgb565(const uint8_t* rgba_buffer, uint16_t* rgb565_buffer, size_t pixel_count);
+    void build_static_cache(uint32_t width, uint32_t height);
 
     DisplayDriver& display_;
     uint32_t tile_height_;
@@ -40,11 +42,14 @@ private:
 
     std::unique_ptr<GaugeScene> gauge_scene_;
     uint8_t* rgba_tile_buffer_;
+    uint8_t* static_rgba_frame_buffer_;
+    uint16_t* static_rgb565_frame_buffer_;
     uint16_t* rgb565_tile_buffer_;
     std::function<void(uint8_t* target, int width, int height, int stride, int y_offset)> test_render_cb_;
 
     uint32_t frame_count_;
     bool initialized_;
+    bool static_cache_ready_;
 };
 
 } // namespace digidash

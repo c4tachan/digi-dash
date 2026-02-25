@@ -45,9 +45,29 @@ public:
     void render(uint8_t* target_buffer, int width, int height, int stride, int y_offset = 0);
 
     /**
+     * @brief Render only static (non-animated) paths
+     */
+    void render_static(uint8_t* target_buffer, int width, int height, int stride, int y_offset = 0);
+
+    /**
+     * @brief Render only dynamic (animated) paths
+     */
+    void render_dynamic(uint8_t* target_buffer, int width, int height, int stride, int y_offset = 0);
+
+    /**
+     * @brief Return whether any dynamic (animated) paths intersect the given region
+     */
+    bool has_dynamic_in_region(int y_offset, int height) const;
+
+    /**
      * @brief Set PID data value
      */
     void set_pid_value(uint32_t pid_id, float value);
+
+    /**
+     * @brief Set renderer quality level for adaptive performance tuning
+     */
+    void set_render_quality(int quality_level);
 
     /**
      * @brief Set target viewport used to fit the gauge onto the display
@@ -86,6 +106,12 @@ private:
     std::unordered_set<uint32_t> seen_pid_ids_;
     std::vector<VectorRenderer::BezierPath> paths_;
     std::vector<VectorRenderer::BezierPath> transformed_paths_;
+    std::vector<VectorRenderer::BezierPath> prepared_paths_;
+    std::vector<int> animation_index_by_path_;
+    std::vector<float> transformed_min_y_;
+    std::vector<float> transformed_max_y_;
+    std::vector<float> prepared_min_y_;
+    std::vector<float> prepared_max_y_;
     uint32_t animation_time_ms_;
     uint32_t width_;
     uint32_t height_;
@@ -93,7 +119,13 @@ private:
     uint32_t viewport_height_;
 
     void rebuild_transformed_paths();
-    const RuntimePathAnimation* find_runtime_animation(size_t path_index) const;
+    void rebuild_animation_lookup();
+    void prepare_frame_paths();
+    void compute_path_y_bounds(const std::vector<VectorRenderer::BezierPath>& paths,
+                               std::vector<float>& min_y,
+                               std::vector<float>& max_y) const;
+    void render_path_set(uint8_t* target_buffer, int width, int height, int stride,
+                         int y_offset, bool render_static_paths, bool render_dynamic_paths);
     float get_runtime_animation_value(const RuntimePathAnimation& animation) const;
     VectorRenderer::BezierPath trim_path_by_ratio(const VectorRenderer::BezierPath& path, float ratio, bool reverse = false) const;
 };
