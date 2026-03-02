@@ -130,6 +130,23 @@ static void draw_fps_overlay(uint16_t* fb, int fb_w, int fb_h, int fps) {
     }
 }
 
+static void draw_obd_status_icon(uint16_t* fb, int fb_w, int fb_h, bool connected) {
+    if (!fb) return;
+
+    const int margin = std::max(8, fb_w / 90);
+    const int outer = std::max(14, fb_w / 36);
+    const int inner = std::max(8, outer - 6);
+
+    const int x = (fb_w - outer) / 2;
+    const int y = margin;
+
+    draw_rect_rgb565(fb, fb_w, fb_h, x, y, outer, outer, rgb_to_rgb565(0, 0, 0));
+
+    uint16_t color = connected ? rgb_to_rgb565(0, 220, 0) : rgb_to_rgb565(220, 0, 0);
+    int inset = (outer - inner) / 2;
+    draw_rect_rgb565(fb, fb_w, fb_h, x + inset, y + inset, inner, inner, color);
+}
+
 } // anonymous namespace
 
 TileHeightRenderer::TileHeightRenderer(DisplayDriver& display, uint32_t tile_height)
@@ -143,7 +160,8 @@ TileHeightRenderer::TileHeightRenderer(DisplayDriver& display, uint32_t tile_hei
     , rgb565_tile_buffer_(nullptr)
     , frame_count_(0)
     , initialized_(false)
-    , static_cache_ready_(false) {
+    , static_cache_ready_(false)
+    , obd_connected_(false) {
 }
 
 TileHeightRenderer::~TileHeightRenderer() {
@@ -308,7 +326,6 @@ void TileHeightRenderer::render_frame() {
     }
     
     // Profiling timers (microseconds)
-    uint64_t t_frame_start = esp_timer_get_time();
     uint64_t t_static_copy = 0;
     uint64_t t_render_paths = 0;
     uint64_t t_convert = 0;
@@ -444,18 +461,17 @@ void TileHeightRenderer::render_frame() {
     last_present_tick = now_present;
 
     draw_fps_overlay(back_buffer, width, height, fps);
+    draw_obd_status_icon(back_buffer, static_cast<int>(width), static_cast<int>(height), obd_connected_);
 
     // Present fully composed frame in one swap to avoid tile-scanning artifacts
     display_.present_back_buffer(back_buffer);
 
     frame_count_++;
 
-    if (frame_count_ % 60 == 0) {
-        uint64_t t_total = esp_timer_get_time() - t_frame_start;
-        ESP_LOGI(TAG, "Frame %lu: total=%.2fms render_paths=%.2fms static_copy=%.2fms convert=%.2fms tile_copy=%.2fms dyn_tiles=%lu/%lu q=%d fps=%d",
-                 (unsigned long)frame_count_, t_total / 1000.0, t_render_paths / 1000.0, t_static_copy / 1000.0, t_convert / 1000.0, t_tile_copy / 1000.0,
-                 (unsigned long)dynamic_tiles, (unsigned long)num_tiles_, render_quality, fps);
-    }
+}
+
+void TileHeightRenderer::set_obd_connected(bool connected) {
+    obd_connected_ = connected;
 }
 
 #include "digidash/color_utils.h"

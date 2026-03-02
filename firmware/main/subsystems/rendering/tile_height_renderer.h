@@ -27,6 +27,7 @@ public:
     bool load_gauge(const uint8_t* data, size_t size) override;
     void render_frame() override;
     void set_pid_value(uint32_t pid_id, float value) override;
+    void set_obd_connected(bool connected) override;
     uint32_t get_frame_count() const override { return frame_count_; }
 
     // Test hook: provide a function to render into the RGBA tile buffer for tests
@@ -50,6 +51,7 @@ private:
     uint32_t frame_count_;
     bool initialized_;
     bool static_cache_ready_;
+    bool obd_connected_;
 };
 
 } // namespace digidash

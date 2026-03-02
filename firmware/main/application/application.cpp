@@ -24,6 +24,7 @@ Application::Application()
     : display_(nullptr)
     , storage_(nullptr)
     , renderer_(nullptr)
+    , obd2_(nullptr)
     , initialized_(false) {
 }
 
@@ -133,7 +134,7 @@ bool Application::initialize() {
     }
 
     // Load gauge file
-    ESP_LOGI(TAG, "Step 4/4: Loading gauge file from SPIFFS");
+    ESP_LOGI(TAG, "Step 4/5: Loading gauge file from SPIFFS");
     
     // Read gauge file from storage
     std::vector<uint8_t> gauge_data;
@@ -151,6 +152,27 @@ bool Application::initialize() {
     }
     
     ESP_LOGI(TAG, "Gauge loaded successfully!");
+
+    ESP_LOGI(TAG, "Step 5/5: Initializing OBD2 UART (ELM327 on A1/A0)");
+    obd2_ = std::make_unique<OBD2UartManager>();
+
+    obd2_->set_state_callback([this](OBD2UartManager::ConnectionState state, const char* message) {
+        ESP_LOGI(TAG, "OBD2 state=%d: %s", static_cast<int>(state), message ? message : "");
+
+        if (renderer_) {
+            renderer_->set_obd_connected(state == OBD2UartManager::ConnectionState::CONNECTED);
+        }
+    });
+
+    obd2_->set_pid_callback([this](uint32_t pid_id, float value) {
+        if (renderer_) {
+            renderer_->set_pid_value(pid_id, value);
+        }
+    });
+
+    if (!obd2_->initialize()) {
+        ESP_LOGW(TAG, "OBD2 UART init did not complete at boot; background retries enabled");
+    }
     
     initialized_ = true;
     ESP_LOGI(TAG, "Application initialized successfully!");
@@ -174,6 +196,9 @@ void Application::run() {
 
     // Animated render loop
     while (true) {
+        if (obd2_) {
+            obd2_->update();
+        }
         renderer_->render_frame();
         vTaskDelay(FRAME_DELAY_MS / portTICK_PERIOD_MS);
     }

@@ -473,10 +473,7 @@ float GaugeScene::get_runtime_animation_value(const RuntimePathAnimation& animat
         return min_value;
     }
 
-    const float seconds = static_cast<float>(animation_time_ms_) / 1000.0f;
-    const float phase = static_cast<float>(animation.path_index) * 0.8f;
-    const float normalized = 0.5f + 0.5f * static_cast<float>(std::sin(seconds * 0.9f + phase));
-    return min_value + (max_value - min_value) * normalized;
+    return min_value;
 }
 
 VectorRenderer::BezierPath GaugeScene::trim_path_by_ratio(const VectorRenderer::BezierPath& path, float ratio, bool reverse) const {

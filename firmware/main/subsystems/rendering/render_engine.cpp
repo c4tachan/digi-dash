@@ -26,4 +26,8 @@ void RenderEngine::set_pid_value(uint32_t pid_id, float value) {
     renderer_->set_pid_value(pid_id, value);
 }
 
+void RenderEngine::set_obd_connected(bool connected) {
+    renderer_->set_obd_connected(connected);
+}
+
 } // namespace digidash
